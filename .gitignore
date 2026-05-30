@@ -27,6 +27,11 @@ go.work.sum
 # env file
 .env
 
+# Project specific
+.ak-historian/
+bin/
+.planning/
+
 # Editor/IDE
 # .idea/
 # .vscode/
