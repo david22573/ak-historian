@@ -35,33 +35,18 @@ COPY (
         '%s' AS interval,
         '%s' AS period,
         '%s' AS source_date,
-        column0 AS open_time_ms,
-        column1 AS open,
-        column2 AS high,
-        column3 AS low,
-        column4 AS close,
-        column5 AS volume,
-        column6 AS close_time_ms,
-        column7 AS quote_asset_volume,
-        column8 AS number_of_trades,
-        column9 AS taker_buy_base_volume,
-        column10 AS taker_buy_quote_volume
-    FROM read_csv('%s', 
-        header=false, 
-        columns={
-            'column0': 'BIGINT',
-            'column1': 'DOUBLE',
-            'column2': 'DOUBLE',
-            'column3': 'DOUBLE',
-            'column4': 'DOUBLE',
-            'column5': 'DOUBLE',
-            'column6': 'BIGINT',
-            'column7': 'DOUBLE',
-            'column8': 'BIGINT',
-            'column9': 'DOUBLE',
-            'column10': 'DOUBLE'
-        }
-    )
+        CAST(#1 AS BIGINT) AS open_time_ms,
+        CAST(#2 AS DOUBLE) AS open,
+        CAST(#3 AS DOUBLE) AS high,
+        CAST(#4 AS DOUBLE) AS low,
+        CAST(#5 AS DOUBLE) AS close,
+        CAST(#6 AS DOUBLE) AS volume,
+        CAST(#7 AS BIGINT) AS close_time_ms,
+        CAST(#8 AS DOUBLE) AS quote_asset_volume,
+        CAST(#9 AS BIGINT) AS number_of_trades,
+        CAST(#10 AS DOUBLE) AS taker_buy_base_volume,
+        CAST(#11 AS DOUBLE) AS taker_buy_quote_volume
+    FROM read_csv_auto('%s', all_varchar=true)
 )
 TO '%s'
 (FORMAT PARQUET, COMPRESSION ZSTD);
