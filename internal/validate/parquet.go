@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os/exec"
 	"strings"
+
+	"github.com/davidmiguel22573/ak-historian/internal/parquetutil"
 )
 
 type ParquetStats struct {
@@ -14,10 +16,35 @@ type ParquetStats struct {
 	MaxOpenTimeMS int64 `json:"max_open_time_ms"`
 }
 
-func ValidateParquet(ctx context.Context, parquetPath string) (ParquetStats, error) {
-	// Escape path
-	path := strings.ReplaceAll(parquetPath, "'", "''")
+func ValidateParquet(_ context.Context, parquetPath string) (ParquetStats, error) {
+	if _, err := exec.LookPath("duckdb"); err == nil {
+		return validateParquetWithDuckDB(parquetPath)
+	}
 
+	stats, err := parquetutil.ReadStats(parquetPath)
+	if err != nil {
+		return ParquetStats{}, err
+	}
+
+	out := ParquetStats{
+		RowCount:      stats.RowCount,
+		MinOpenTimeMS: stats.MinOpenTimeMS,
+		MaxOpenTimeMS: stats.MaxOpenTimeMS,
+	}
+
+	if out.RowCount == 0 {
+		return out, fmt.Errorf("parquet file is empty")
+	}
+
+	if out.MinOpenTimeMS > out.MaxOpenTimeMS {
+		return out, fmt.Errorf("invalid time range: min (%d) > max (%d)", out.MinOpenTimeMS, out.MaxOpenTimeMS)
+	}
+
+	return out, nil
+}
+
+func validateParquetWithDuckDB(parquetPath string) (ParquetStats, error) {
+	path := strings.ReplaceAll(parquetPath, "'", "''")
 	query := fmt.Sprintf(`
 SELECT
     COUNT(*) AS row_count,
@@ -26,32 +53,19 @@ SELECT
 FROM read_parquet('%s');
 `, path)
 
-	// Get output in JSON format for easier parsing
-	cmd := exec.CommandContext(ctx, "duckdb", "-json", "-c", query)
+	cmd := exec.Command("duckdb", "-json", "-c", query)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return ParquetStats{}, fmt.Errorf("duckdb validation failed: %w, output: %s", err, string(output))
 	}
 
 	var results []ParquetStats
-	err = json.Unmarshal(output, &results)
-	if err != nil {
+	if err := json.Unmarshal(output, &results); err != nil {
 		return ParquetStats{}, fmt.Errorf("failed to parse duckdb output: %w", err)
 	}
-
 	if len(results) == 0 {
 		return ParquetStats{}, fmt.Errorf("no results from duckdb validation")
 	}
 
-	stats := results[0]
-
-	if stats.RowCount == 0 {
-		return stats, fmt.Errorf("parquet file is empty")
-	}
-
-	if stats.MinOpenTimeMS > stats.MaxOpenTimeMS {
-		return stats, fmt.Errorf("invalid time range: min (%d) > max (%d)", stats.MinOpenTimeMS, stats.MaxOpenTimeMS)
-	}
-
-	return stats, nil
+	return results[0], nil
 }

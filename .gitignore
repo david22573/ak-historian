@@ -35,3 +35,15 @@ bin/
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# CodePicker
+.codepicker/
+codepicker.yaml
+policy.json
+.codepickerignore
+codepicker_context.txt
+
+# Build and run folders
+.cache/
+runs/
+bin/

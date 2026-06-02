@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -87,4 +88,49 @@ func (r *R2Client) UploadFile(ctx context.Context, localPath string, objectKey s
 	}
 
 	return nil
+}
+
+func (r *R2Client) DownloadFile(ctx context.Context, objectKey string, localPath string) error {
+	result, err := r.client.GetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(r.bucket),
+		Key:    aws.String(objectKey),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get object: %w", err)
+	}
+	defer result.Body.Close()
+
+	file, err := os.Create(localPath)
+	if err != nil {
+		return fmt.Errorf("failed to create file: %w", err)
+	}
+	defer file.Close()
+
+	_, err = io.Copy(file, result.Body)
+	if err != nil {
+		return fmt.Errorf("failed to copy object body to file: %w", err)
+	}
+
+	return nil
+}
+
+func (r *R2Client) ListObjects(ctx context.Context, prefix string) ([]string, error) {
+	var keys []string
+	paginator := s3.NewListObjectsV2Paginator(r.client, &s3.ListObjectsV2Input{
+		Bucket: aws.String(r.bucket),
+		Prefix: aws.String(prefix),
+	})
+
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list objects: %w", err)
+		}
+
+		for _, obj := range page.Contents {
+			keys = append(keys, *obj.Key)
+		}
+	}
+
+	return keys, nil
 }

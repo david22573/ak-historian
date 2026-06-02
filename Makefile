@@ -1,4 +1,4 @@
-.PHONY: fmt test vet build run-example
+.PHONY: fmt test vet build run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
 
 fmt:
 	go fmt ./...
@@ -21,3 +21,21 @@ run-example:
 		--start 2024-01 \
 		--end 2024-01 \
 		--dry-run
+
+preflight-backfill:
+	./scripts/preflight_backfill.sh
+
+backfill-core:
+	./scripts/backfill_core_futures_1m.sh
+
+backfill-expansion:
+	./scripts/backfill_expansion_futures_1m.sh
+
+backfill-all:
+	./scripts/backfill_all_futures_1m.sh
+
+prove-backfill:
+	./scripts/prove_backfill.sh
+
+prove-link-dataset:
+	./scripts/prove_link_research_dataset.sh
