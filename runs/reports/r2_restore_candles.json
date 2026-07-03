@@ -1,0 +1,27 @@
+{
+  "final_label": "restore_complete",
+  "market": "futures-um",
+  "interval": "1m",
+  "symbols": [
+    "AVAXUSDT"
+  ],
+  "months_requested": [
+    "2024-01"
+  ],
+  "objects_expected": 1,
+  "objects_found": 1,
+  "objects_missing": null,
+  "files_restored": [
+    ".ak-historian/work/candles/futures-um/1m/symbol=AVAXUSDT/year=2024/month=01/AVAXUSDT-1m-2024-01.parquet"
+  ],
+  "files_skipped_existing": null,
+  "files_failed_validation": null,
+  "files_failed_restore": null,
+  "local_output_root": ".ak-historian/work",
+  "overwrite": false,
+  "dry_run": false,
+  "verify": true,
+  "commands_run": [
+    "./bin/ak-historian restore-r2-candles --market futures-um --interval 1m --symbols AVAXUSDT --start 2024-01 --end 2024-01 --out .ak-historian/work --dry-run false --concurrency 1"
+  ]
+}
