@@ -9,12 +9,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/davidmiguel22573/ak-historian/internal/binance"
-	"github.com/davidmiguel22573/ak-historian/internal/config"
-	"github.com/davidmiguel22573/ak-historian/internal/converter"
-	"github.com/davidmiguel22573/ak-historian/internal/storage"
-	"github.com/davidmiguel22573/ak-historian/internal/validate"
-	"github.com/davidmiguel22573/ak-historian/internal/workdir"
+	"github.com/david22573/ak-historian/internal/binance"
+	"github.com/david22573/ak-historian/internal/config"
+	"github.com/david22573/ak-historian/internal/converter"
+	"github.com/david22573/ak-historian/internal/storage"
+	"github.com/david22573/ak-historian/internal/validate"
+	"github.com/david22573/ak-historian/internal/workdir"
 	"github.com/spf13/cobra"
 )
 

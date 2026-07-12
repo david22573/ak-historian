@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/davidmiguel22573/ak-historian/internal/app"
+	"github.com/david22573/ak-historian/internal/app"
 )
 
 func main() {
