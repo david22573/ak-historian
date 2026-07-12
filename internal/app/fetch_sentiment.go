@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/davidmiguel22573/ak-historian/internal/datasets"
-	"github.com/davidmiguel22573/ak-historian/internal/datasets/sentiment"
+	"github.com/david22573/ak-historian/internal/datasets"
+	"github.com/david22573/ak-historian/internal/datasets/sentiment"
 	"github.com/spf13/cobra"
 )
 
@@ -91,7 +91,7 @@ var fetchSentimentCmd = &cobra.Command{
 		}
 
 		var manifestObjs []datasets.Object
-		
+
 		for k, pRows := range partitions {
 			spec := datasets.DatasetSpec{
 				Kind:     datasets.KindSentiment,
@@ -108,9 +108,7 @@ var fetchSentimentCmd = &cobra.Command{
 				os.Exit(1)
 			}
 
-			if fsFormat == "parquet" {
-				key = key
-			} else {
+			if fsFormat != "parquet" {
 				// strip parquet and add format if needed, but requirements say path builder provides format natively or we just append?
 				// well, requirement: datasets/sentiment/source=alternative_me/dataset=fear_greed/scope=global/interval=1d/year=2023/month=01/fear_greed-2023-01.parquet
 				// Let's assume path builder returns .parquet
@@ -124,7 +122,7 @@ var fetchSentimentCmd = &cobra.Command{
 			}
 
 			var stats datasets.RowStats
-			
+
 			if fsFormat == "json" {
 				if err := datasets.WriteSentimentRowsJSON(outPath, pRows); err != nil {
 					fmt.Printf("{\"status\":\"FAIL\",\"error\":\"write json failed: %v\"}\n", err)
@@ -148,7 +146,7 @@ var fetchSentimentCmd = &cobra.Command{
 					os.Exit(1)
 				}
 				os.Remove(csvPath)
-				
+
 				var err error
 				stats, err = datasets.ValidateDatasetParquet(context.Background(), outPath)
 				if err != nil {
@@ -187,7 +185,7 @@ var fetchSentimentCmd = &cobra.Command{
 			}
 
 			manifestPath = filepath.Join(fsOut, mKey)
-			
+
 			var minEvent, maxEvent int64
 			for i, o := range manifestObjs {
 				if i == 0 || o.MinEventTimeMS < minEvent {
@@ -230,7 +228,7 @@ var fetchSentimentCmd = &cobra.Command{
 		if manifestPath != "" {
 			res["manifest"] = manifestPath
 		}
-		
+
 		b, _ := json.Marshal(res)
 		fmt.Println(string(b))
 	},
