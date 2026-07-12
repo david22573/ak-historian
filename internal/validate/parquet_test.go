@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/davidmiguel22573/ak-historian/internal/converter"
+	"github.com/david22573/ak-historian/internal/converter"
 )
 
 func TestValidateParquet(t *testing.T) {

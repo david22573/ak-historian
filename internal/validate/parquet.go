@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/davidmiguel22573/ak-historian/internal/parquetutil"
+	"github.com/david22573/ak-historian/internal/parquetutil"
 )
 
 type ParquetStats struct {

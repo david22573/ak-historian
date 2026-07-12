@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/davidmiguel22573/ak-historian/internal/datasets/derivatives"
-	"github.com/davidmiguel22573/ak-historian/internal/datasets/sentiment"
+	"github.com/david22573/ak-historian/internal/datasets/derivatives"
+	"github.com/david22573/ak-historian/internal/datasets/sentiment"
 )
 
 func WriteSentimentRowsJSON(path string, rows []sentiment.Row) error {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/davidmiguel22573/ak-historian/internal/binance"
+	"github.com/david22573/ak-historian/internal/binance"
 )
 
 type fakeObjectStore struct {
