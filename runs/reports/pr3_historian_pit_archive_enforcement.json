@@ -1,0 +1,195 @@
+{
+  "report_schema_version": "ak-historian.pr3-report.v1",
+  "generated_at": "2026-07-13T17:51:49Z",
+  "executive_verdict": "COMPLETE",
+  "final_label": "PR3_HISTORIAN_PIT_ARCHIVE_ENFORCEMENT_COMPLETE",
+  "baseline_commit": "241648e29b9e31a588b52ae8e0aeb58c6f7535b8",
+  "accepted_ancestor_commits": [
+    "73d2e7d09f821ec330508c663f4baded7fcb15e8",
+    "b91f7b4bc039091001ff9b5a2dc01414154db8eb",
+    "241648e29b9e31a588b52ae8e0aeb58c6f7535b8"
+  ],
+  "resulting_commit_hashes": [
+    "695aac277e4127b7efb247cac5ff5da7ca6287a1"
+  ],
+  "branch": "pr3-historian-pit-archive-enforcement",
+  "schemas": {
+    "snapshot_manifest": "ak-historian.snapshot-manifest.v1",
+    "snapshot_reference": "ak-historian.snapshot.v1",
+    "coverage_policy": "ak-historian.coverage-policy.v1",
+    "availability_policy": "ak-historian.availability-policy.v1",
+    "evidence_envelope": "ak-historian.pit-evidence.v1",
+    "evaluation_result": "ak-historian.pit-evaluation-result.v1"
+  },
+  "coverage_policy": {
+    "window_semantics": "[start,end)",
+    "expected_source": "explicit required partition identities and intervals",
+    "exceptions": "stable declared closure or unavailable-source periods only",
+    "partial_boundaries": "explicit first and final partition intervals",
+    "strict_requirement": "all required partitions observed exactly once with exact bounds",
+    "structured_output": [
+      "expected_partitions",
+      "observed_partitions",
+      "missing_partitions",
+      "duplicate_partitions",
+      "out_of_window_partitions",
+      "coverage_ratio",
+      "maximum_observed_gap_seconds",
+      "maximum_permitted_gap_seconds",
+      "strict_verdict"
+    ]
+  },
+  "availability_policy": {
+    "cutoff_required": true,
+    "cutoff_boundary": "available_at <= evaluation_cutoff",
+    "publication_delay_rule": "available_at >= event_time_end + required_publication_delay",
+    "future_timestamps_fail": true,
+    "ingestion_time_can_substitute": false,
+    "generated_at_can_substitute": false
+  },
+  "canonical_hashing": {
+    "algorithm": "SHA-256",
+    "prefix": "sha256:",
+    "serialization": "compact canonical JSON",
+    "time_normalization": "UTC RFC3339Nano",
+    "stable_sorting": true,
+    "machine_absolute_paths_in_evidence_hash": false,
+    "terminology": [
+      "integrity-hashed",
+      "digest-verified",
+      "tamper-evident",
+      "content-addressed"
+    ]
+  },
+  "atomic_write_design": [
+    "create same-directory temporary file",
+    "write bounded complete content",
+    "flush",
+    "close",
+    "apply 0644 permissions",
+    "atomic rename",
+    "sync containing directory"
+  ],
+  "verdicts": [
+    "PIT_ELIGIBLE",
+    "PIT_INELIGIBLE",
+    "PIT_EVIDENCE_INCOMPLETE",
+    "PIT_EVIDENCE_CORRUPT",
+    "PIT_DIAGNOSTIC_ONLY"
+  ],
+  "failure_codes": [
+    "MANIFEST_MISSING",
+    "MANIFEST_EMPTY",
+    "MANIFEST_UNREADABLE",
+    "MANIFEST_MALFORMED",
+    "MANIFEST_SCHEMA_UNSUPPORTED",
+    "MANIFEST_FIELD_MISSING",
+    "MANIFEST_DATASET_MISMATCH",
+    "MANIFEST_WINDOW_MISMATCH",
+    "MANIFEST_HASH_MISMATCH",
+    "MANIFEST_SNAPSHOT_COUNT_MISMATCH",
+    "SNAPSHOT_MISSING",
+    "SNAPSHOT_HASH_MISMATCH",
+    "SNAPSHOT_DUPLICATE_ID",
+    "SNAPSHOT_PARTITION_CONFLICT",
+    "SNAPSHOT_SCHEMA_UNSUPPORTED",
+    "SNAPSHOT_PATH_INVALID",
+    "SNAPSHOT_TOO_LARGE",
+    "SNAPSHOT_SIZE_MISMATCH",
+    "COVERAGE_POLICY_UNSUPPORTED",
+    "COVERAGE_POLICY_INVALID",
+    "COVERAGE_INCOMPLETE",
+    "AVAILABILITY_TIMESTAMP_MISSING",
+    "AVAILABLE_AFTER_EVALUATION",
+    "PUBLICATION_DELAY_VIOLATION",
+    "FUTURE_SNAPSHOT_TIMESTAMP",
+    "EVALUATION_CUTOFF_MISSING",
+    "EVIDENCE_SCHEMA_UNSUPPORTED",
+    "EVIDENCE_INTEGRITY_HASH_MISMATCH",
+    "EVIDENCE_STRICT_PROMOTION_INVALID",
+    "EVIDENCE_SECURITY_FIELD_MISSING"
+  ],
+  "former_defect_regression": {
+    "perfect_window_without_manifest": "PIT_EVIDENCE_INCOMPLETE",
+    "snapshot_manifest_argument_observably_consumed": true,
+    "pit_eligible_tests_use_real_manifest_and_snapshot_bytes": true
+  },
+  "tests_added": [
+    "manifest validation and bounded parsing",
+    "snapshot byte integrity and rooted-path security",
+    "complete explicit coverage and declared exceptions",
+    "historical availability and publication delay",
+    "evidence mutation and strict-approval invariants",
+    "manifest-bypass regression and CLI argument consumption",
+    "atomic persistence and versioned compatibility fixture"
+  ],
+  "security_review": [
+    {"finding": "path traversal and archive-root escape", "resolution": "clean relative paths plus os.OpenRoot", "status": "RESOLVED"},
+    {"finding": "symlink escape", "resolution": "reject symlink components and use rooted open", "status": "RESOLVED"},
+    {"finding": "manifest substitution", "resolution": "bind manifest, dataset, window, and archive identities", "status": "RESOLVED"},
+    {"finding": "hash confusion", "resolution": "exact SHA-256 prefix/length and constant-time comparison", "status": "RESOLVED"},
+    {"finding": "duplicate IDs and conflicting partitions", "resolution": "stable identity and one-to-one partition checks", "status": "RESOLVED"},
+    {"finding": "oversized and malformed input", "resolution": "bounded reads, strict JSON, required fields, and duration overflow limits", "status": "RESOLVED"},
+    {"finding": "TOCTOU", "resolution": "hash opened rooted file descriptor and validate its size", "status": "RESOLVED_ON_VERIFIED_LINUX_HOST"},
+    {"finding": "temporary or partial authority", "resolution": "atomic persistence and temporary-name rejection", "status": "RESOLVED"},
+    {"finding": "log and absolute-path leakage", "resolution": "stable IDs/reasons and clean path scan", "status": "RESOLVED"},
+    {"finding": "fail-open defaults", "resolution": "strict default and distinct diagnostic verdict", "status": "RESOLVED"},
+    {"finding": "generated or ingestion time used as availability", "resolution": "mandatory separate source available_at", "status": "RESOLVED"},
+    {"finding": "false signature terminology", "resolution": "integrity-hash terminology only", "status": "RESOLVED"}
+  ],
+  "verification": {
+    "accepted_linked_worktree": [
+      {"command": "gofmt -w <changed-go-files>", "exit_code": 0},
+      {"command": "GOWORK=off go mod tidy", "exit_code": 0},
+      {"command": "git diff --exit-code -- go.mod go.sum", "exit_code": 0},
+      {"command": "GOWORK=off go vet ./...", "exit_code": 0},
+      {"command": "GOWORK=off go test ./...", "exit_code": 0},
+      {"command": "GOWORK=off go test -race ./...", "exit_code": 0},
+      {"command": "GOWORK=off go build ./...", "exit_code": 1, "limitation": "Go 1.25 linked-worktree VCS root discovery"},
+      {"command": "GOWORK=off make verify", "exit_code": 2, "limitation": "same linked-worktree VCS root discovery after passing vet/test"},
+      {"command": "git diff --check", "exit_code": 0}
+    ],
+    "fresh_clone": {
+      "head": "695aac277e4127b7efb247cac5ff5da7ca6287a1",
+      "no_sibling_ak_repositories": true,
+      "commands": [
+        {"command": "git clone --no-local --branch pr3-historian-pit-archive-enforcement <source> <isolated>", "exit_code": 0},
+        {"command": "gofmt -w <changed-go-files>", "exit_code": 0},
+        {"command": "GOWORK=off go mod tidy", "exit_code": 0},
+        {"command": "git diff --exit-code -- go.mod go.sum", "exit_code": 0},
+        {"command": "GOWORK=off go vet ./...", "exit_code": 0},
+        {"command": "GOWORK=off go test ./...", "exit_code": 0},
+        {"command": "GOWORK=off go test -race ./...", "exit_code": 0},
+        {"command": "GOWORK=off go build ./...", "exit_code": 0},
+        {"command": "GOWORK=off make verify", "exit_code": 0},
+        {"command": "git diff --check", "exit_code": 0},
+        {"command": "git status --short", "exit_code": 0, "output": ""},
+        {"command": "lightweight secret scan", "exit_code": 0, "matches": 0},
+        {"command": "absolute-path contamination scan", "exit_code": 0, "matches": 0}
+      ]
+    }
+  },
+  "files_changed": [
+    "README.md",
+    "docs/pit_archive_evidence.md",
+    "internal/app/pit.go",
+    "internal/app/pit_test.go",
+    "internal/pitarchive/",
+    "testdata/pitarchive/v1/evidence.example.json"
+  ],
+  "compatibility": "Versioned, integrity-valid, path-independent evidence fixture for future RIF consumption; no RIF policy is implemented here.",
+  "deferred_work": [
+    "RIF lifecycle evidence consumption",
+    "candidate promotion",
+    "engine paper-strategy implementation and grading",
+    "trader integration and execution",
+    "mainnet controls",
+    "asymmetric signatures and key management",
+    "repository-hygiene cleanup"
+  ],
+  "candidate_promoted": false,
+  "engine_paper_strategies_changed": false,
+  "trader_execution_changed": false,
+  "rif_lifecycle_policy_changed": false,
+  "recommended_next_pr": "PR4_ENGINE_STRATEGY_FAITHFUL_PAPER_EVALUATION"
+}
