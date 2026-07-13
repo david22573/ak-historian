@@ -33,6 +33,26 @@ make build
 
 The binary will be available at `./bin/ak-historian`.
 
+## Point-in-time archive eligibility
+
+Strict point-in-time eligibility is produced only by `verify-pit` from a versioned snapshot manifest and the real snapshot files under an approved archive root:
+
+```bash
+./bin/ak-historian verify-pit \
+  --snapshot-manifest ./archive/snapshot-manifest.json \
+  --archive-root ./archive \
+  --dataset-id candles:BTCUSDT:1h \
+  --dataset-version 2025-01-v1 \
+  --window-start 2025-01-01T00:00:00Z \
+  --window-end 2025-02-01T00:00:00Z \
+  --evaluation-cutoff 2025-02-02T00:00:00Z \
+  --historian-build ak-historian/v1 \
+  --evidence-output ./runs/pit-evidence.json \
+  --result-output ./runs/pit-result.json
+```
+
+Window bounds are `[start,end)`, while the availability boundary is inclusive: every accepted snapshot must satisfy `available_at <= evaluation_cutoff`. `--diagnostic-only` always returns `PIT_DIAGNOSTIC_ONLY` and never enables strict promotion. See [docs/pit_archive_evidence.md](docs/pit_archive_evidence.md) for the versioned schemas, coverage rules, digest specification, and security model.
+
 ## Configuration
 
 Create a `.env` file in the project root:

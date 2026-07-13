@@ -1,0 +1,54 @@
+{
+  "schema_version": "ak-historian.pit-evidence.v1",
+  "evidence_id": "pit-evidence:0d0ce2b9ba236ae07d59931d360d07f230fe46eb91eec205ba763261be331408",
+  "dataset_id": "candles:BTCUSDT:1h",
+  "dataset_version": "2025-01-v1",
+  "research_window_start": "2025-01-01T00:00:00Z",
+  "research_window_end": "2025-01-01T03:00:00Z",
+  "evaluation_cutoff": "2025-01-01T15:00:00Z",
+  "manifest_id": "manifest-test-v1",
+  "manifest_hash": "sha256:c766acc07ad6d1e3e761a344871a1ec52018e4236d5422e6f88b14a5db45ba11",
+  "archive_id": "archive-test-v1",
+  "coverage_policy_version": "ak-historian.coverage-policy.v1",
+  "manifest_validation_verdict": "PASS",
+  "snapshot_integrity": {
+    "verified_count": 3,
+    "rejected_count": 0,
+    "strict_verdict": "PASS"
+  },
+  "coverage": {
+    "policy_id": "hourly-continuous-v1",
+    "policy_schema_version": "ak-historian.coverage-policy.v1",
+    "expected_partitions": [
+      "BTCUSDT/2025-01-01T00",
+      "BTCUSDT/2025-01-01T01",
+      "BTCUSDT/2025-01-01T02"
+    ],
+    "observed_partitions": [
+      "BTCUSDT/2025-01-01T00",
+      "BTCUSDT/2025-01-01T01",
+      "BTCUSDT/2025-01-01T02"
+    ],
+    "missing_partitions": [],
+    "duplicate_partitions": [],
+    "out_of_window_partitions": [],
+    "coverage_ratio": "1.000000",
+    "maximum_observed_gap_seconds": 0,
+    "maximum_permitted_gap_seconds": 0,
+    "strict_verdict": "PASS"
+  },
+  "snapshot_count": 3,
+  "snapshot_set_digest": "sha256:3ccacb4f48ab58aa5dedf105b4c9ac761c7e96333192e3923063a1b5c3cb192e",
+  "availability": {
+    "policy_id": "available-after-close-v1",
+    "evaluation_cutoff": "2025-01-01T15:00:00Z",
+    "accepted_count": 3,
+    "rejected_count": 0,
+    "strict_verdict": "PASS"
+  },
+  "final_verdict": "PIT_ELIGIBLE",
+  "strict_promotion_allowed": true,
+  "generated_at": "2025-01-02T03:00:00Z",
+  "historian_build": "ak-historian/test-build",
+  "integrity_hash": "sha256:a6209c9918b094867f4b24c44875c47586a6626f6409906f7613bda48d6c8d96"
+}
