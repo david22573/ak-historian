@@ -13,7 +13,7 @@ build:
 	go build -o ./bin/ak-historian ./cmd/ak-historian
 
 build-prospective:
-	GOWORK=off go build -trimpath -ldflags "-X github.com/david22573/ak-historian/internal/prospective.CollectorSourceCommit=$$(git rev-parse HEAD)" -o ./bin/ak-historian ./cmd/ak-historian
+	GOWORK=off go build -buildvcs=false -trimpath -ldflags "-X github.com/david22573/ak-historian/internal/prospective.CollectorSourceCommit=$$(git rev-parse HEAD)" -o ./bin/ak-historian ./cmd/ak-historian
 
 verify:
 	./scripts/verify.sh
