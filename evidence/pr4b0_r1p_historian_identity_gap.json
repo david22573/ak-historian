@@ -2,9 +2,9 @@
   "schema_version": "ak-historian.pit-gap-manifest.v1",
   "status": "PIT_EVIDENCE_INCOMPLETE",
   "dataset_id": "ak-historian-candles-futures-um-1m-pr4b0-r1p",
-  "dataset_version": "sha256:cdc39143d3b845f810a63e770eec4cd189f3fd0ed3c991618be12b45eb922d04",
+  "dataset_version": "sha256:afb3b656d6d97d61e8a10941e0553a90875c52dc8315b7e8e6f4de8ca6a725d2",
   "manifest_id": "pr4b0-r1p-pit-gap-2023-2025-v1",
-  "manifest_hash": "sha256:de7104452fb7e785032894922e2b4ebe80359bce08e44c157cab6047fb045eb6",
+  "manifest_hash": "sha256:2bdad377474ea79b830b54aab32df45d43f07070fbc4e8e4b39c41634b12e515",
   "candidate_id": "phase12/DowntrendMidVolReliefLong240m",
   "candidate_version": "v1",
   "implementation_hash": "sha256:3c2e20fd5bf615864aebc5be35ce86c15a6ed8f83de33b2f1d33b00dae6fbfa1",
@@ -7491,7 +7491,7 @@
       ]
     }
   ],
-  "snapshot_set_hash": "sha256:cdc39143d3b845f810a63e770eec4cd189f3fd0ed3c991618be12b45eb922d04",
+  "snapshot_set_hash": "sha256:afb3b656d6d97d61e8a10941e0553a90875c52dc8315b7e8e6f4de8ca6a725d2",
   "manifest_created_at": "2026-07-13T08:00:00Z",
-  "historian_build": "source-parent-3eeff1eb45da281e0003dc1577ec55aa6cda1b1b"
+  "historian_build": "pr4b0-r1p-canonical-gap-builder-v1"
 }

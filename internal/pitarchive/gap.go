@@ -141,7 +141,7 @@ func BuildGapManifest(options GapBuildOptions) (GapManifest, error) {
 			}
 		}
 	}
-	manifest.SnapshotSetHash, err = digestCanonical(manifest.Snapshots)
+	manifest.SnapshotSetHash, err = ComputeGapSnapshotSetHash(manifest.Snapshots)
 	if err != nil {
 		return GapManifest{}, err
 	}
@@ -165,8 +165,17 @@ func ComputeGapManifestHash(manifest GapManifest) (string, error) {
 	sort.Strings(copyManifest.RequiredSymbols)
 	sort.Strings(copyManifest.RequiredContextSymbols)
 	sort.Slice(copyManifest.Snapshots, func(i, j int) bool {
-		return copyManifest.Snapshots[i].PartitionKey < copyManifest.Snapshots[j].PartitionKey
+		if copyManifest.Snapshots[i].PartitionKey != copyManifest.Snapshots[j].PartitionKey {
+			return copyManifest.Snapshots[i].PartitionKey < copyManifest.Snapshots[j].PartitionKey
+		}
+		return copyManifest.Snapshots[i].RelativePath < copyManifest.Snapshots[j].RelativePath
 	})
+	for i := range copyManifest.Snapshots {
+		copyManifest.Snapshots[i].EvidenceGaps = append([]ReasonCode{}, copyManifest.Snapshots[i].EvidenceGaps...)
+		sort.Slice(copyManifest.Snapshots[i].EvidenceGaps, func(a, b int) bool {
+			return copyManifest.Snapshots[i].EvidenceGaps[a] < copyManifest.Snapshots[i].EvidenceGaps[b]
+		})
+	}
 	sort.Slice(copyManifest.MissingEvidence, func(i, j int) bool {
 		return copyManifest.MissingEvidence[i].PartitionKey < copyManifest.MissingEvidence[j].PartitionKey
 	})
@@ -178,10 +187,155 @@ func ComputeGapManifestHash(manifest GapManifest) (string, error) {
 	return digestCanonical(copyManifest)
 }
 
-func WriteGapManifest(output string, manifest GapManifest) error {
-	expected, err := ComputeGapManifestHash(manifest)
-	if err != nil || !compareDigest(expected, manifest.ManifestHash) {
+// ComputeGapSnapshotSetHash returns the canonical dataset version for the
+// metadata-only snapshot set. Caller ordering and reason ordering do not
+// affect the result.
+func ComputeGapSnapshotSetHash(snapshots []GapSnapshot) (string, error) {
+	canonical := append([]GapSnapshot{}, snapshots...)
+	sort.Slice(canonical, func(i, j int) bool {
+		if canonical[i].PartitionKey != canonical[j].PartitionKey {
+			return canonical[i].PartitionKey < canonical[j].PartitionKey
+		}
+		return canonical[i].RelativePath < canonical[j].RelativePath
+	})
+	for i := range canonical {
+		canonical[i].EvidenceGaps = append([]ReasonCode{}, canonical[i].EvidenceGaps...)
+		sort.Slice(canonical[i].EvidenceGaps, func(a, b int) bool {
+			return canonical[i].EvidenceGaps[a] < canonical[i].EvidenceGaps[b]
+		})
+	}
+	return digestCanonical(canonical)
+}
+
+// VerifyGapManifest validates the complete identity chain without opening or
+// enumerating archive contents. It is suitable for independent consumers of
+// a versioned incomplete-evidence bundle.
+func VerifyGapManifest(manifest GapManifest) error {
+	if manifest.SchemaVersion != GapManifestSchemaVersion {
+		return errors.New("gap manifest schema version is unsupported")
+	}
+	if unstableGapIdentity(manifest.DatasetID) || unstableGapIdentity(manifest.ManifestID) || strings.TrimSpace(manifest.CandidateID) == "" || strings.TrimSpace(manifest.CandidateVersion) == "" {
+		return errors.New("gap manifest identities are missing, mutable, or path-based")
+	}
+	if !validSHA256(manifest.ImplementationHash) || !validSHA256(manifest.DatasetVersion) || !validSHA256(manifest.SnapshotSetHash) || !validSHA256(manifest.ManifestHash) {
+		return errors.New("gap manifest identity digest is invalid")
+	}
+	if manifest.PhysicalCoverageStart.IsZero() || manifest.PhysicalCoverageEnd.IsZero() || !manifest.PhysicalCoverageStart.Before(manifest.PhysicalCoverageEnd) || !monthFloor(manifest.PhysicalCoverageStart).Equal(manifest.PhysicalCoverageStart.UTC()) || !monthFloor(manifest.PhysicalCoverageEnd).Equal(manifest.PhysicalCoverageEnd.UTC()) {
+		return errors.New("gap manifest physical coverage is invalid")
+	}
+	if manifest.EvaluationCutoff.Before(manifest.PhysicalCoverageEnd) || manifest.ManifestCreatedAt.Before(manifest.EvaluationCutoff) {
+		return errors.New("gap manifest cutoff or creation time is invalid")
+	}
+	if strings.TrimSpace(manifest.CoveragePolicyVersion) == "" || strings.TrimSpace(manifest.AvailabilityPolicyVersion) == "" || strings.TrimSpace(manifest.EventSchemaVersion) == "" || strings.TrimSpace(manifest.HistorianBuild) == "" || len(manifest.RequiredSymbols) == 0 || len(manifest.RequiredContextSymbols) == 0 || len(manifest.ExpectedPartitions) == 0 {
+		return errors.New("gap manifest required authority fields are missing")
+	}
+	if manifest.Status != VerdictEvidenceIncomplete || manifest.ProvablePITCoverage.Available || manifest.ProvablePITCoverage.Start != nil || manifest.ProvablePITCoverage.End != nil || len(manifest.MissingEvidence) == 0 {
+		return errors.New("gap manifest must remain explicit incomplete evidence")
+	}
+	if !uniqueNonemptyStrings(manifest.RequiredSymbols) || !uniqueNonemptyStrings(manifest.RequiredContextSymbols) {
+		return errors.New("gap manifest symbol authority is invalid")
+	}
+	canonicalExpected, err := expectedGapPartitions(manifest)
+	if err != nil {
+		return err
+	}
+
+	expected := make(map[string]struct{}, len(manifest.ExpectedPartitions))
+	for _, partition := range manifest.ExpectedPartitions {
+		if strings.TrimSpace(partition) == "" {
+			return errors.New("gap manifest expected partition is empty")
+		}
+		if _, duplicate := expected[partition]; duplicate {
+			return errors.New("gap manifest contains duplicate expected partitions")
+		}
+		expected[partition] = struct{}{}
+	}
+	if len(expected) != len(canonicalExpected) {
+		return errors.New("gap manifest expected partition coverage is incomplete")
+	}
+	for _, partition := range canonicalExpected {
+		if _, ok := expected[partition]; !ok {
+			return errors.New("gap manifest expected partition coverage is incomplete")
+		}
+	}
+	snapshots := make(map[string]GapSnapshot, len(manifest.Snapshots))
+	for _, snapshot := range manifest.Snapshots {
+		if _, declared := expected[snapshot.PartitionKey]; !declared {
+			return errors.New("gap manifest snapshot is undeclared")
+		}
+		if _, duplicate := snapshots[snapshot.PartitionKey]; duplicate {
+			return errors.New("gap manifest contains duplicate snapshots")
+		}
+		if snapshot.SnapshotID != "snapshot:"+snapshot.PartitionKey || validateSnapshotPath(snapshot.RelativePath) != nil || !validSHA256(snapshot.ContentHash) || !compareDigest(snapshot.ContentHash, snapshot.PartitionHash) || snapshot.ByteSize <= 0 || snapshot.EventTimeStart.IsZero() || !snapshot.EventTimeStart.Before(snapshot.EventTimeEnd) {
+			return errors.New("gap manifest snapshot identity is invalid")
+		}
+		partitionComponents := strings.Split(snapshot.PartitionKey, "/")
+		partitionMonth, parseErr := time.Parse("2006-01", partitionComponents[len(partitionComponents)-1])
+		if parseErr != nil || !snapshot.EventTimeStart.Equal(partitionMonth.UTC()) || !snapshot.EventTimeEnd.Equal(partitionMonth.UTC().AddDate(0, 1, 0)) {
+			return errors.New("gap manifest snapshot bounds do not match partition identity")
+		}
+		if !uniqueReasons(snapshot.EvidenceGaps) {
+			return errors.New("gap manifest snapshot evidence reasons are invalid")
+		}
+		schemaAuthorityMissing := strings.Contains(strings.ToLower(manifest.EventSchemaVersion), "unversioned")
+		if containsReason(snapshot.EvidenceGaps, ReasonSnapshotMissing) || (schemaAuthorityMissing != containsReason(snapshot.EvidenceGaps, ReasonSnapshotSchemaUnsupported)) {
+			return errors.New("gap manifest snapshot evidence is inconsistent")
+		}
+		if snapshot.SourceAvailableAt == nil {
+			if !containsReason(snapshot.EvidenceGaps, ReasonAvailabilityTimestampMissing) {
+				return errors.New("snapshot without availability lacks fail-closed evidence")
+			}
+		} else {
+			available := snapshot.SourceAvailableAt.UTC()
+			if containsReason(snapshot.EvidenceGaps, ReasonAvailabilityTimestampMissing) || (available.Before(snapshot.EventTimeEnd) != containsReason(snapshot.EvidenceGaps, ReasonPublicationDelayViolation)) || (available.After(manifest.EvaluationCutoff) != containsReason(snapshot.EvidenceGaps, ReasonAvailableAfterEvaluation)) {
+				return errors.New("snapshot availability evidence is inconsistent")
+			}
+		}
+		snapshots[snapshot.PartitionKey] = snapshot
+	}
+	missing := make(map[string]MissingPartitionEvidence, len(manifest.MissingEvidence))
+	for _, evidence := range manifest.MissingEvidence {
+		if _, declared := expected[evidence.PartitionKey]; !declared || len(evidence.Reasons) == 0 || !uniqueReasons(evidence.Reasons) {
+			return errors.New("gap manifest missing-partition evidence is invalid")
+		}
+		if _, duplicate := missing[evidence.PartitionKey]; duplicate {
+			return errors.New("gap manifest contains duplicate missing-partition evidence")
+		}
+		missing[evidence.PartitionKey] = evidence
+	}
+	for partition := range expected {
+		if snapshot, hasSnapshot := snapshots[partition]; !hasSnapshot {
+			if evidence, hasMissing := missing[partition]; !hasMissing || !containsReason(evidence.Reasons, ReasonSnapshotMissing) {
+				return errors.New("gap manifest expected partition lacks snapshot or missing evidence")
+			}
+			evidence := missing[partition]
+			schemaAuthorityMissing := strings.Contains(strings.ToLower(manifest.EventSchemaVersion), "unversioned")
+			if !containsReason(evidence.Reasons, ReasonAvailabilityTimestampMissing) || (schemaAuthorityMissing != containsReason(evidence.Reasons, ReasonSnapshotSchemaUnsupported)) || containsReason(evidence.Reasons, ReasonAvailableAfterEvaluation) || containsReason(evidence.Reasons, ReasonPublicationDelayViolation) {
+				return errors.New("gap manifest absent-snapshot evidence is inconsistent")
+			}
+		} else if evidence, hasMissing := missing[partition]; len(snapshot.EvidenceGaps) == 0 {
+			if hasMissing {
+				return errors.New("gap manifest complete snapshot has missing evidence")
+			}
+		} else if !hasMissing || !equalReasonSets(snapshot.EvidenceGaps, evidence.Reasons) {
+			return errors.New("gap manifest snapshot gaps do not match missing evidence")
+		}
+	}
+
+	snapshotSetHash, err := ComputeGapSnapshotSetHash(manifest.Snapshots)
+	if err != nil || !compareDigest(snapshotSetHash, manifest.SnapshotSetHash) || !compareDigest(snapshotSetHash, manifest.DatasetVersion) {
+		return errors.New("gap manifest dataset or snapshot-set hash does not match canonical contents")
+	}
+	manifestHash, err := ComputeGapManifestHash(manifest)
+	if err != nil || !compareDigest(manifestHash, manifest.ManifestHash) {
 		return errors.New("gap manifest hash does not match canonical contents")
+	}
+	return nil
+}
+
+func WriteGapManifest(output string, manifest GapManifest) error {
+	if err := VerifyGapManifest(manifest); err != nil {
+		return err
 	}
 	data, err := json.MarshalIndent(manifest, "", "  ")
 	if err != nil {
@@ -190,13 +344,85 @@ func WriteGapManifest(output string, manifest GapManifest) error {
 	return writeAtomic(output, append(data, '\n'), DefaultMaxGapBytes)
 }
 
+func unstableGapIdentity(value string) bool {
+	return strings.TrimSpace(value) == "" || strings.ContainsAny(value, `/\\`) || mutableAlias(value)
+}
+
+func containsReason(values []ReasonCode, target ReasonCode) bool {
+	for _, value := range values {
+		if value == target {
+			return true
+		}
+	}
+	return false
+}
+
+func uniqueReasons(values []ReasonCode) bool {
+	allowed := map[ReasonCode]struct{}{
+		ReasonSnapshotMissing: {}, ReasonSnapshotSchemaUnsupported: {}, ReasonAvailabilityTimestampMissing: {},
+		ReasonAvailableAfterEvaluation: {}, ReasonPublicationDelayViolation: {},
+	}
+	seen := make(map[ReasonCode]struct{}, len(values))
+	for _, value := range values {
+		if _, ok := allowed[value]; !ok {
+			return false
+		}
+		if _, duplicate := seen[value]; duplicate {
+			return false
+		}
+		seen[value] = struct{}{}
+	}
+	return true
+}
+
+func equalReasonSets(left, right []ReasonCode) bool {
+	if len(left) != len(right) || !uniqueReasons(left) || !uniqueReasons(right) {
+		return false
+	}
+	for _, value := range left {
+		if !containsReason(right, value) {
+			return false
+		}
+	}
+	return true
+}
+
+func uniqueNonemptyStrings(values []string) bool {
+	seen := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		if strings.TrimSpace(value) != value || value == "" {
+			return false
+		}
+		if _, duplicate := seen[value]; duplicate {
+			return false
+		}
+		seen[value] = struct{}{}
+	}
+	return true
+}
+
+func expectedGapPartitions(manifest GapManifest) ([]string, error) {
+	components := strings.Split(manifest.ExpectedPartitions[0], "/")
+	if len(components) != 4 || components[0] == "" || components[1] == "" {
+		return nil, errors.New("gap manifest partition identity is invalid")
+	}
+	symbols := sortedUnique(append(append([]string{}, manifest.RequiredSymbols...), manifest.RequiredContextSymbols...))
+	result := make([]string, 0)
+	for month := monthFloor(manifest.PhysicalCoverageStart); month.Before(manifest.PhysicalCoverageEnd); month = month.AddDate(0, 1, 0) {
+		for _, symbol := range symbols {
+			result = append(result, fmt.Sprintf("%s/%s/%s/%s", components[0], components[1], symbol, month.Format("2006-01")))
+		}
+	}
+	return result, nil
+}
+
 func validateGapOptions(options GapBuildOptions) error {
 	for name, value := range map[string]string{"archive_root": options.ArchiveRoot, "dataset_id": options.DatasetID, "manifest_id": options.ManifestID, "candidate_id": options.CandidateID, "candidate_version": options.CandidateVersion, "market": options.Market, "interval": options.Interval, "historian_build": options.HistorianBuild} {
 		if strings.TrimSpace(value) == "" {
 			return fmt.Errorf("%s is required", name)
 		}
 	}
-	if strings.ContainsAny(options.DatasetID, `/\\`) || mutableAlias(options.DatasetID) || mutableAlias(options.ManifestID) {
+	if unstableGapIdentity(options.DatasetID) || unstableGapIdentity(options.ManifestID) {
 		return errors.New("dataset and manifest identities must be stable non-path, non-mutable tokens")
 	}
 	if !validSHA256(options.ImplementationHash) {
@@ -251,6 +477,9 @@ func hashGapSnapshot(root *os.Root, relative, partition string, start, end, avai
 	} else {
 		value := available.UTC()
 		snapshot.SourceAvailableAt = &value
+		if value.Before(end) {
+			reasons = append(reasons, ReasonPublicationDelayViolation)
+		}
 		if value.After(cutoff) {
 			reasons = append(reasons, ReasonAvailableAfterEvaluation)
 		}
