@@ -1,0 +1,96 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p4.activation-proof.v1",
+  "generated_at_utc": "2026-07-14T19:20:22.187785519Z",
+  "dataset_id": "ak-historian-binance-futures-um-1m-prospective-pit-r1",
+  "generation": "r1-activated-20260714T190957Z",
+  "activation_hash": "sha256:37bbb11677d07496b43fee24b4a84f12730713ef89506662015a53c04e8ef187",
+  "collector_source_commit": "598a9119be828daa7db76dacec017456807ccfed",
+  "collector_build_id": "sha256:788d5a53cfe6b14ed711973a8e348123cba2b07132b3b527d9e7be5a9e28a52a",
+  "protocol_hash": "sha256:671a27239d72e163428378dff926acc9f7a22036aff247cc8888ee9f06077311",
+  "symbol_universe": ["ADAUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "DOGEUSDT", "ETHUSDT", "LINKUSDT", "SOLUSDT", "XRPUSDT"],
+  "cadence_seconds": 300,
+  "cycles": [
+    {
+      "cycle_id": "cycle-20260714T191001083657364Z",
+      "started_at_utc": "2026-07-14T19:10:01.083657364Z",
+      "completed_at_utc": "2026-07-14T19:10:03.360708961Z",
+      "provider_server_time_utc": "2026-07-14T19:10:01.707Z",
+      "clock_synchronized": true,
+      "full_universe_success": true,
+      "receipt_count": 9,
+      "normalized_record_count": 44,
+      "duplicate_count": 0,
+      "conflict_count": 0,
+      "schema_failure_count": 0,
+      "missing_symbols": []
+    },
+    {
+      "cycle_id": "cycle-20260714T191501088780287Z",
+      "started_at_utc": "2026-07-14T19:15:01.088780287Z",
+      "completed_at_utc": "2026-07-14T19:15:05.187062203Z",
+      "provider_server_time_utc": "2026-07-14T19:15:01.773Z",
+      "clock_synchronized": true,
+      "full_universe_success": true,
+      "receipt_count": 9,
+      "normalized_record_count": 45,
+      "duplicate_count": 0,
+      "conflict_count": 0,
+      "schema_failure_count": 0,
+      "missing_symbols": []
+    },
+    {
+      "cycle_id": "cycle-20260714T192001377961864Z",
+      "started_at_utc": "2026-07-14T19:20:01.377961864Z",
+      "completed_at_utc": "2026-07-14T19:20:03.987953723Z",
+      "provider_server_time_utc": "2026-07-14T19:20:01.829Z",
+      "clock_synchronized": true,
+      "full_universe_success": true,
+      "receipt_count": 9,
+      "normalized_record_count": 45,
+      "duplicate_count": 0,
+      "conflict_count": 0,
+      "schema_failure_count": 0,
+      "missing_symbols": []
+    }
+  ],
+  "evidence_counts": {
+    "receipts": 27,
+    "raw_responses": 27,
+    "normalized_fragments": 27,
+    "normalized_records": 134,
+    "raw_response_bytes": 17641,
+    "partition_manifests": 9,
+    "dataset_checkpoints": 1
+  },
+  "observed_availability_latency_from_final_candle_close": {
+    "unit": "nanoseconds",
+    "minimum": 1919139057,
+    "maximum": 5148322184,
+    "mean": 3109438142,
+    "sample_count": 27
+  },
+  "error_counts": {
+    "duplicates": 0,
+    "conflicts": 0,
+    "schema_failures": 0,
+    "missing_symbol_cycles": 0,
+    "clock_errors": 0,
+    "provider_http_date_missing": 0,
+    "provider_server_time_hash_missing": 0,
+    "availability_incomplete_receipts": 0
+  },
+  "receipt_chain_genesis_hash": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "final_receipt_chain_hash": "sha256:44409b217367a292f7b9ab9d6bf48859ac0240199df31e2630a04589bfd2c6e6",
+  "final_accepted_receipt_chain_hash": "sha256:ab20b5ce22d52caa17e1f024e38b95736d1effdc8953acd9febbde20cf233aff",
+  "checkpoint_hash": "sha256:a7b1fd78310c154a6fd9aa4fa35cb91e45fea8221dbff40801bd27c7cb834303",
+  "checkpoint_research_eligible": false,
+  "checkpoint_note": "The activation-day partitions are intentionally open; this checkpoint proves immutable acquisition evidence and does not authorize research.",
+  "research_boundary": {
+    "candidate_executions": 0,
+    "candidate_calculations": 0,
+    "candidate_validation_partition_reads": 0,
+    "holdout_reads": 0,
+    "real_rif_state_created": false
+  },
+  "artifact_hash": "sha256:8f57ddfce4553ab4bc03b20de7ed14f088310a89ad15c060423927557c54e4d4"
+}

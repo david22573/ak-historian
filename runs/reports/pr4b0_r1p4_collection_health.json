@@ -1,0 +1,25 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p4.collection-health-report.v1",
+  "generated_at_utc": "2026-07-14T19:20:22.399878144Z",
+  "supervisor": {
+    "type": "user-level systemd persistent timer",
+    "timer_state": "active",
+    "service_state": "inactive_between_oneshot_runs",
+    "next_scheduled_utc": "2026-07-14T19:25:00Z"
+  },
+  "last_successful_cycle": "cycle-20260714T192001377961864Z",
+  "last_successful_cycle_utc": "2026-07-14T19:20:03.987953723Z",
+  "receipt_chain_valid": true,
+  "receipt_count": 27,
+  "open_partitions": 9,
+  "observed_rows": 134,
+  "open_partition_structural_missing_intervals": 18,
+  "post_cursor_collection_discontinuities": 0,
+  "evidence_gaps": 0,
+  "duplicate_intervals": 0,
+  "conflicts": 0,
+  "schema_errors": 0,
+  "clock_errors": 0,
+  "clock_evidence_status": "ACCEPTABLE",
+  "artifact_hash": "sha256:d10d29638047de0d25f92d60c814898ad019f0387279f42645c80a2c6f734a23"
+}
