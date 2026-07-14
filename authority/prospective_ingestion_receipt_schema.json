@@ -1,0 +1,135 @@
+{
+  "$id": "ak-historian.prospective-ingestion-receipt.v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "anyOf": [
+        {
+          "required": [
+            "source_availability_timestamp"
+          ]
+        },
+        {
+          "required": [
+            "source_availability_reference"
+          ]
+        }
+      ]
+    }
+  ],
+  "properties": {
+    "acquisition_evidence_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "acquisition_evidence_type": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "acquisition_timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "availability_policy_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "content_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "coverage_policy_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "covered_period_end": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "covered_period_start": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "dataset_id": {
+      "minLength": 1,
+      "pattern": "^[^/\\\\]+$",
+      "type": "string"
+    },
+    "dataset_version": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "evaluation_cutoff": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "expected_partition": {
+      "const": true
+    },
+    "manifest_relative_identity": {
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\.\\.)[^\\\\]+$",
+      "type": "string"
+    },
+    "partition_key": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "previous_receipt_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "receipt_hash": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "registration_sequence": {
+      "minimum": 1,
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "ak-historian.prospective-ingestion-receipt.v1"
+    },
+    "source_availability_reference": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "source_availability_timestamp": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "source_schema_version": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "symbol": {
+      "minLength": 1,
+      "type": "string"
+    }
+  },
+  "required": [
+    "acquisition_evidence_hash",
+    "acquisition_evidence_type",
+    "acquisition_timestamp",
+    "availability_policy_version",
+    "content_hash",
+    "coverage_policy_version",
+    "covered_period_end",
+    "covered_period_start",
+    "dataset_id",
+    "dataset_version",
+    "evaluation_cutoff",
+    "expected_partition",
+    "manifest_relative_identity",
+    "partition_key",
+    "previous_receipt_hash",
+    "receipt_hash",
+    "registration_sequence",
+    "schema_version",
+    "source_schema_version",
+    "symbol"
+  ],
+  "title": "Prospective immutable ingestion receipt",
+  "type": "object"
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "ak-historian.physical-archive-identity.v1",
+  "classification": "IMMUTABLE_PHYSICAL_ARCHIVE_GAP_IDENTITY",
+  "dataset_id": "ak-historian-candles-futures-um-1m-pr4b0-r1p",
+  "dataset_version": "sha256:afb3b656d6d97d61e8a10941e0553a90875c52dc8315b7e8e6f4de8ca6a725d2",
+  "manifest_id": "pr4b0-r1p-pit-gap-2023-2025-v1",
+  "manifest_hash": "sha256:2bdad377474ea79b830b54aab32df45d43f07070fbc4e8e4b39c41634b12e515",
+  "physical_coverage_start": "2023-01-01T00:00:00Z",
+  "physical_coverage_end": "2026-01-01T00:00:00Z",
+  "snapshot_count": 324,
+  "source_schema_version": "ak-historian.source-candle.binance-futures-um-1m.v1",
+  "source_schema_authority_hash": "sha256:4ff5ef49773e3d9a65d50e64d3a7d3ecc6a50d32699c8af1de41ed3518cc99c5",
+  "availability_authority_hash": "sha256:2e6808b21aeedcb51a259600b13ab5284086c3a913430f724d9967ad27f471ce",
+  "provable_pit_coverage": false,
+  "identity_hash": "sha256:24163d84065594fc9d6196f98b1053ea62d0d5e619fce037f6f466ed10169e1d"
+}

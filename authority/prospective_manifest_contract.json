@@ -1,0 +1,32 @@
+{
+  "collector_contract": {
+    "acquire_once": true,
+    "append_only_registration": true,
+    "canary_scope": "synthetic or clearly non-research only",
+    "capture_source_availability_at_birth": true,
+    "hash_before_registration": true,
+    "local_paths_excluded_from_identity": true,
+    "mutable_aliases_forbidden": true,
+    "real_pr4b0_r1_collection_authorized": false
+  },
+  "conflict_behavior": "same manifest identity with different content or receipt hash fails closed and quarantines both claims",
+  "duplicate_behavior": "byte-identical receipt/content at the same manifest identity is idempotent",
+  "manifest_schema_version": "ak-historian.prospective-manifest.v1",
+  "recovery_behavior": "recover only from the last verified receipt hash; orphaned content is quarantined and never auto-registered",
+  "required_authority": [
+    "dataset ID and version",
+    "source-schema version",
+    "acquisition timestamp",
+    "source availability timestamp or authoritative reference",
+    "acquisition evidence type and hash",
+    "content hash",
+    "manifest-relative identity",
+    "required primary/context coverage",
+    "expected partitions",
+    "evaluation cutoff",
+    "coverage/availability policy versions",
+    "append-only receipt chain"
+  ],
+  "schema_version": "ak-historian.prospective-manifest-contract.v1",
+  "validation_command": "ak-historian validate-prospective-manifest --manifest \u003cmanifest.json\u003e"
+}
