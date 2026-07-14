@@ -1,4 +1,4 @@
-.PHONY: fmt test vet build verify run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
+.PHONY: fmt test vet build verify build-prospective run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
 
 fmt:
 	go fmt ./...
@@ -11,6 +11,9 @@ vet:
 
 build:
 	go build -o ./bin/ak-historian ./cmd/ak-historian
+
+build-prospective:
+	GOWORK=off go build -trimpath -ldflags "-X github.com/david22573/ak-historian/internal/prospective.CollectorSourceCommit=$$(git rev-parse HEAD)" -o ./bin/ak-historian ./cmd/ak-historian
 
 verify:
 	./scripts/verify.sh

@@ -1,0 +1,15 @@
+[Unit]
+Description=AK Historian public prospective PIT collector
+After=network-online.target time-sync.target
+Wants=network-online.target time-sync.target
+
+[Service]
+Type=oneshot
+ExecStart=@BINARY@ prospective-collect-once --repository-root @REPOSITORY@ --data-root @DATA_ROOT@ --activation @ACTIVATION@
+WorkingDirectory=@REPOSITORY@
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=@DATA_ROOT@
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6

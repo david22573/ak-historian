@@ -1,0 +1,25 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p4.availability-policy.v1",
+  "observed_available_at_calculation": "maximum of complete-response-received UTC, parsed provider HTTP Date, and provider server time associated with the cycle",
+  "pit_eligibility_requirements": [
+    "HTTPS request succeeded with hostname and TLS verification",
+    "provider HTTP Date and server-time evidence exist and parse",
+    "local UTC clock evidence has timedatectl NTPSynchronized=yes",
+    "all required receipt fields exist and both receipt chains verify",
+    "raw response bytes match their recorded SHA-256",
+    "closed source schema validates",
+    "candle close_time_ms is strictly earlier than provider server time",
+    "durable accepted receipt exists before any future evaluation cutoff"
+  ],
+  "incomplete_evidence_status": "AVAILABILITY_EVIDENCE_INCOMPLETE",
+  "forbidden_availability_inference_sources": [
+    "candle timestamps alone",
+    "filenames",
+    "filesystem timestamps",
+    "Git commit timestamps",
+    "later report timestamps",
+    "expected publication schedules"
+  ],
+  "local_clock_requirement": "timedatectl NTPSynchronized=yes captured and hashed once per cycle; absence, command failure, or any other value prevents PIT eligibility",
+  "policy_hash": "sha256:cbd4c1670830843d233b6b6c3dc3dac0489e3d38fc7854caf388b5e543dfc3e1"
+}

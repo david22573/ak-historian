@@ -1,0 +1,23 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p4.supervisor-contract.v1",
+  "mechanism": "user-level systemd oneshot service and persistent timer",
+  "user_level": true,
+  "cadence_seconds": 300,
+  "recovery": "A failed oneshot remains evidenced in the cycle ledger; the next persistent timer run rebuilds verified cursors and catches up without backdating.",
+  "commands": [
+    "prospective-collect-once",
+    "prospective-status",
+    "prospective-verify",
+    "prospective-gap-report",
+    "prospective-manifest-checkpoint",
+    "prospective-supervisor-install",
+    "prospective-supervisor-status",
+    "prospective-supervisor-stop",
+    "prospective-supervisor-uninstall"
+  ],
+  "path_policy": "Committed templates contain no machine-specific absolute path; installer-generated uncommitted user units may contain the actual checkout, binary, activation, and data paths.",
+  "secret_policy": "Unit files and logs contain no credentials or secret environment variables; collector has no credential inputs.",
+  "logging_policy": "stdout/stderr are retained by the user journal and status reports contain collection health only.",
+  "single_instance": "An exclusive nonblocking flock under runtime state rejects concurrent collectors.",
+  "contract_hash": "sha256:ad9fe0dd2ec28eaa2f89a64a3112209bb2a2506c4caba0124994bf18524522d6"
+}

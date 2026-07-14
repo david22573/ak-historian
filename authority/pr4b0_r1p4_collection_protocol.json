@@ -1,0 +1,74 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p4.collection-protocol.v1",
+  "dataset_id": "ak-historian-binance-futures-um-1m-prospective-pit-r1",
+  "dataset_generation_rule": "A generation is born after this protocol and collector source are committed; its immutable activation hash names the open append-only generation. Later checkpoints bind the activation, terminal receipt hash, and sorted partition hashes without rewriting prior identities.",
+  "source_venue": "Binance",
+  "market_type": "USD-M futures",
+  "public_endpoint_family": [
+    "https://fapi.binance.com/fapi/v1/time",
+    "https://fapi.binance.com/fapi/v1/klines"
+  ],
+  "source_schema_version": "ak-historian.source-candle.binance-futures-um-1m.v1",
+  "source_schema_fingerprint": "sha256:eb5cc448b9333dd76a51fea226833f054d200c2c22a0b8ff3a4ba21905f7c1be",
+  "source_schema_authority_hash": "sha256:4ff5ef49773e3d9a65d50e64d3a7d3ecc6a50d32699c8af1de41ed3518cc99c5",
+  "ingestion_receipt_version": "ak-historian.prospective-ingestion-receipt.v1",
+  "ingestion_receipt_hash": "sha256:7b69a348fed2facf918a869a333c79d5c2d6d9df2bd10c9c52efd2f179398ff1",
+  "manifest_contract_version": "ak-historian.prospective-manifest-contract.v1",
+  "manifest_contract_hash": "sha256:a07c34075721250db17e56a13d55d66cbcea934d013866305b61506a37323882",
+  "required_primary_symbols": ["ADAUSDT", "AVAXUSDT", "BNBUSDT", "DOGEUSDT", "ETHUSDT", "LINKUSDT", "SOLUSDT", "XRPUSDT"],
+  "required_context_symbols": ["BTCUSDT", "ETHUSDT"],
+  "total_unique_symbol_universe": ["ADAUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "DOGEUSDT", "ETHUSDT", "LINKUSDT", "SOLUSDT", "XRPUSDT"],
+  "timeframe": "1m",
+  "collection_cadence_seconds": 300,
+  "completed_candle_rule": "Retain only a one-minute candle whose inclusive close_time_ms is strictly earlier than the provider server time captured for that cycle; never retain the still-open candle.",
+  "availability_evidence_policy": "ak-historian.pr4b0-r1p4.availability-policy.v1; availability is born only in a durable committed-collector receipt and is never inferred from event timestamps.",
+  "clock_evidence_policy": "Every cycle requires local timedatectl NTPSynchronized=yes evidence and hashes that evidence into every receipt; missing or unacceptable evidence fails closed.",
+  "retry_and_rate_limit_policy": {
+    "maximum_attempts": 3,
+    "initial_backoff_seconds": 1,
+    "backoff_multiplier": 2,
+    "request_timeout_seconds": 20,
+    "maximum_response_bytes": 8388608,
+    "retry_statuses": [429, 418, 500, 502, 503, 504],
+    "provider_ban_behavior": "bounded retry then fail and preserve the failed cycle record"
+  },
+  "canonical_serialization": "UTF-8 JSON using Go encoding/json deterministic map-key ordering, UTC RFC3339Nano timestamps, one trailing LF, and SHA-256 with sha256: prefix; self-hash fields are omitted when calculating their identity.",
+  "raw_response_retention_policy": "Retain each successful public kline response immutably under a manifest-relative content-bound cycle/symbol identity; temporary and cache files are excluded.",
+  "normalized_fragment_retention_policy": "Retain each closed-schema normalized fragment immutably with normalization version, source authority, cycle, symbol, records, and canonical fragment hash.",
+  "partitioning_policy": "UTC calendar day per symbol; expected sequence is exactly 1,440 one-minute opens for a closed day. Open days remain PARTITION_OPEN and missing candles are never fabricated.",
+  "hash_chain_policy": "Each envelope binds the prior envelope hash and each nested accepted Historian receipt binds the prior accepted-receipt hash. Both chains start at the all-zero SHA-256 genesis and are append-only.",
+  "duplicate_and_conflict_handling": "Byte/content-identical durable identities are idempotent; differing content at an existing immutable identity fails closed, increments conflict evidence, and blocks checkpoint eligibility.",
+  "restart_and_catch_up_behavior": "Rebuild cursors from the verified durable receipt ledger, request from last open plus 60,000 ms, record the actual later availability time, never backdate, and expose discontinuities as physical/evidence gaps.",
+  "gap_semantics": "A missing expected one-minute open is a physical gap; a record lacking a valid receipt/provider/clock chain is an evidence gap. Late catch-up can close a physical gap only at its actual receipt availability.",
+  "supervisor_mechanism": "user-level systemd oneshot service plus persistent five-minute timer, with collector file lock and next-timer recovery",
+  "activation_sequence": [
+    "validate accepted governance and Historian contracts",
+    "commit protocol, policies, collector, tests, and supervisor templates",
+    "build the exact committed collector with its source commit embedded",
+    "create immutable activation identity and zero-hash receipt genesis",
+    "install and start user-level durable supervisor",
+    "collect at least three scheduled full-universe cycles",
+    "verify and commit immutable activation evidence"
+  ],
+  "security_boundaries": [
+    "public unauthenticated HTTPS GET only",
+    "approved hostname fapi.binance.com only",
+    "TLS verification uses the Go standard trust verifier",
+    "redirects are rejected",
+    "no credential or secret environment dependency",
+    "no exchange account, order, trader, testnet, or mainnet endpoint",
+    "network code is isolated to internal/prospective"
+  ],
+  "candidate_evaluation_prohibition": "Candidate execution, signal generation, result calculation, outcome inspection, Engine invocation, and real RIF lifecycle operations are prohibited.",
+  "accepted_starting_commits": {
+    "engine": "1d575f4b5331a640b1dc4fa46a2c281aa6a2487a",
+    "historian": "cd848370a04f274531fea55a7370509466b6e7bd",
+    "rif": "c5823e88d0f1fd8f25a93ee70c5a3490fc12dbcb"
+  },
+  "accepted_governance_hashes": {
+    "independence_v3": "sha256:84a6863b354b453dbe13698b9854ec4adcd116466a0831e7107efb892042cc1f",
+    "uncertainty_v2": "sha256:1a91541c94378cc6f34e62a39ae504d3d013b5dab63a2b622641cdd1088148fb",
+    "concentration_decision": "sha256:a126849e4cc0bd6457cf3f11079c4e3e2865ffce6c53a95ce92fa250130d39d5"
+  },
+  "protocol_hash": "sha256:671a27239d72e163428378dff926acc9f7a22036aff247cc8888ee9f06077311"
+}

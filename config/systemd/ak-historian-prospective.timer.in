@@ -1,0 +1,11 @@
+[Unit]
+Description=Run AK Historian public prospective PIT collector every five minutes
+
+[Timer]
+OnCalendar=*-*-* *:0/5:00 UTC
+Persistent=true
+AccuracySec=1s
+Unit=ak-historian-prospective.service
+
+[Install]
+WantedBy=timers.target
