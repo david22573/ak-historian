@@ -73,7 +73,8 @@ diff -u <(sort "$manifest_hashes") <(jq -r '.partition_hashes[]' "$checkpoint" |
 
 for report in \
   "$ROOT/runs/reports/pr4b0_r1p4_activation_proof.json" \
-  "$ROOT/runs/reports/pr4b0_r1p4_collection_health.json"; do
+  "$ROOT/runs/reports/pr4b0_r1p4_collection_health.json" \
+  "$ROOT/runs/reports/pr4b0_r1p4_final_decision.json"; do
   recorded=$(jq -r .artifact_hash "$report")
   actual="sha256:$(jq -cS 'del(.artifact_hash)' "$report" | sha256sum | awk '{print $1}')"
   test "$recorded" = "$actual"
