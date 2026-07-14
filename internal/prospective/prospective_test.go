@@ -341,6 +341,12 @@ func TestAtomicPartialWriteAndConflictingIdentityFailClosed(t *testing.T) {
 }
 
 func TestSecurityBoundarySourceHasNoCredentialTraderOrOrderSurface(t *testing.T) {
+	if err := InstallSupervisor("relative", "/bin/true", "/tmp/data", "/tmp/activation"); err == nil {
+		t.Fatal("supervisor accepted a relative repository path")
+	}
+	if err := InstallSupervisor("/tmp/repo with space", "/bin/true", "/tmp/data", "/tmp/activation"); err == nil {
+		t.Fatal("supervisor accepted an unsafe unit path")
+	}
 	root := repositoryRoot(t)
 	for _, relative := range []string{"internal/prospective", "internal/app/prospective_collection.go", "config/systemd"} {
 		path := filepath.Join(root, relative)

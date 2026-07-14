@@ -245,8 +245,8 @@ func (store *Store) CreateCheckpoint(now time.Time) (DatasetCheckpoint, error) {
 
 func InstallSupervisor(repositoryRoot, binaryPath, dataRoot, activationPath string) error {
 	for _, path := range []string{repositoryRoot, binaryPath, dataRoot, activationPath} {
-		if !filepath.IsAbs(path) || strings.ContainsAny(path, "\n\r\x00") {
-			return errors.New("supervisor paths must be safe absolute paths")
+		if !filepath.IsAbs(path) || strings.ContainsAny(path, " \t\n\r\x00") {
+			return errors.New("supervisor paths must be safe whitespace-free absolute paths")
 		}
 	}
 	configRoot, err := os.UserConfigDir()
@@ -262,11 +262,10 @@ func InstallSupervisor(repositoryRoot, binaryPath, dataRoot, activationPath stri
 	if err != nil {
 		return err
 	}
-	quote := func(value string) string { return `"` + strings.ReplaceAll(value, `"`, `\"`) + `"` }
-	service := bytes.ReplaceAll(serviceTemplate, []byte("@BINARY@"), []byte(quote(binaryPath)))
-	service = bytes.ReplaceAll(service, []byte("@REPOSITORY@"), []byte(quote(repositoryRoot)))
-	service = bytes.ReplaceAll(service, []byte("@DATA_ROOT@"), []byte(quote(dataRoot)))
-	service = bytes.ReplaceAll(service, []byte("@ACTIVATION@"), []byte(quote(activationPath)))
+	service := bytes.ReplaceAll(serviceTemplate, []byte("@BINARY@"), []byte(binaryPath))
+	service = bytes.ReplaceAll(service, []byte("@REPOSITORY@"), []byte(repositoryRoot))
+	service = bytes.ReplaceAll(service, []byte("@DATA_ROOT@"), []byte(dataRoot))
+	service = bytes.ReplaceAll(service, []byte("@ACTIVATION@"), []byte(activationPath))
 	if err := WriteAtomic(filepath.Join(unitDir, "ak-historian-prospective.service"), service, 0o644); err != nil {
 		return err
 	}
