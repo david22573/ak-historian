@@ -1,1 +1,19 @@
-{"artifact_hash":"sha256:78b809dbcbdcad11237c8bb809a2b8b8274bd6a23a19dae866b4bf86c88c339e","checkpoint_hash":"sha256:7d2cb161941deab10896ef95ecc04db7455501fb2621eca4a3ff4b87fa82e1b7","complete_eligible_utc_days":195,"generated_at_utc":"2026-07-15T09:42:58.527916392Z","label":"PR4B0_R1P5_STRUCTURAL_COVERAGE_READY","research_boundary":{"candidate_calculations":0,"candidate_executions":0,"candidate_partition_reads":0,"holdout_reads":0,"real_rif_state_created":false},"schema_version":"ak-historian.pr4b0-r1p5.final-decision.v1"}
+{
+  "schema_version": "ak-historian.pr4b0-r1p5.final-decision.v1",
+  "generated_at_utc": "2026-07-15T09:59:09.374388997Z",
+  "label": "PR4B0_R1P5_COLLECTION_REMEDIATION_REQUIRED",
+  "checkpoint_hash": "sha256:7d2cb161941deab10896ef95ecc04db7455501fb2621eca4a3ff4b87fa82e1b7",
+  "complete_eligible_utc_days": 195,
+  "structural_coverage_conditions_passed": true,
+  "all_verification_passed": false,
+  "failed_verification_gate": "STANDALONE_FRESH_CLONE_BUILD",
+  "failure_reason": "Receipt-bound source commit 59951efd756a8024455608d298c5534c778e5121 omits ignored internal/r1p5/coverage.go and is not standalone-buildable. The frozen post-acquisition source rule forbids replacing that commit.",
+  "research_boundary": {
+    "candidate_executions": 0,
+    "candidate_calculations": 0,
+    "candidate_partition_reads": 0,
+    "holdout_reads": 0,
+    "real_rif_state_created": false
+  },
+  "artifact_hash": "sha256:fe5b5d273c74bb2f50b66db04315afe72abb3cec985b11ee19760f74d71d95d4"
+}

@@ -1,0 +1,16 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5.source-integrity-failure.v1",
+  "detected_at_utc": "2026-07-15T09:59:09.374388997Z",
+  "backfill_source_commit": "59951efd756a8024455608d298c5534c778e5121",
+  "checkpoint_evidence_commit": "e01bfecfb41a9df8ddb8c47dfab5fcbaf39cdec5",
+  "failed_command": "GOWORK=off go vet ./... (standalone fresh clone)",
+  "failed_diagnostic": "internal/app/r1p5.go references r1p5.BuildCoverage and related functions, but internal/r1p5/coverage.go is absent from the Git tree",
+  "ignore_rule": ".gitignore:16:coverage.*",
+  "ignored_file": "internal/r1p5/coverage.go",
+  "file_present_in_backfill_source_commit": false,
+  "other_untracked_go_source": [],
+  "historical_requests_had_started": true,
+  "source_replacement_permitted": false,
+  "disposition": "COLLECTION_REMEDIATION_REQUIRED",
+  "artifact_hash": "sha256:c44a87288aee72b3300f0f4c781eea229fc87509b7df43473fa7ab93b89fe907"
+}

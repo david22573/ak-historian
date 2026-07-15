@@ -1,1 +1,36 @@
-{"artifact_hash":"sha256:3b9da28b3268f5716d2e61422ed0de1248cf2798f0fa1f42517ece90af2cc3e4","backfill_complete":true,"checkpoint_hash":"sha256:7d2cb161941deab10896ef95ecc04db7455501fb2621eca4a3ff4b87fa82e1b7","clock_evidence_status":"ACCEPTABLE","complete_eligible_utc_days":195,"conflict_count":0,"contiguous_eligible_end_utc":"2026-07-15T00:00:00Z","contiguous_eligible_start_utc":"2026-01-01T00:00:00Z","evidence_gap_count":0,"future_chronological_three_part_split_structurally_feasible":true,"generated_at_utc":"2026-07-15T09:42:58.527916392Z","immutable_checkpoint":"r1p5-checkpoint-20260715T094258Z","label":"PR4B0_R1P5_STRUCTURAL_COVERAGE_READY","live_collector_healthy":true,"minimum_required_days":180,"missing_interval_count":0,"per_symbol_coverage":[{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"ADAUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"AVAXUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"BNBUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"BTCUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"DOGEUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"ETHUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"LINKUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"SOLUSDT"},{"complete_utc_day_count":195,"conflict_count":0,"duplicate_count":0,"end_utc":"2026-07-15T00:00:00Z","evidence_gap_count":0,"missing_interval_count":0,"observed_candles":280800,"start_utc":"2026-01-01T00:00:00Z","symbol":"XRPUSDT"}],"readiness_watcher_state":"active","receipt_chain_healthy":true,"remaining_structural_days":0,"schema_version":"ak-historian.pr4b0-r1p5.readiness-status.v1"}
+{
+  "schema_version": "ak-historian.pr4b0-r1p5.readiness-status.v1",
+  "generated_at_utc": "2026-07-15T09:59:09.374388997Z",
+  "immutable_checkpoint": "r1p5-checkpoint-20260715T094258Z",
+  "checkpoint_hash": "sha256:7d2cb161941deab10896ef95ecc04db7455501fb2621eca4a3ff4b87fa82e1b7",
+  "contiguous_eligible_start_utc": "2026-01-01T00:00:00Z",
+  "contiguous_eligible_end_utc": "2026-07-15T00:00:00Z",
+  "complete_eligible_utc_days": 195,
+  "minimum_required_days": 180,
+  "remaining_structural_days": 0,
+  "per_symbol_coverage": [
+    {"symbol":"ADAUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"AVAXUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"BNBUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"BTCUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"DOGEUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"ETHUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"LINKUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"SOLUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0},
+    {"symbol":"XRPUSDT","start_utc":"2026-01-01T00:00:00Z","end_utc":"2026-07-15T00:00:00Z","observed_candles":280800,"complete_utc_day_count":195,"missing_interval_count":0,"duplicate_count":0,"conflict_count":0,"evidence_gap_count":0}
+  ],
+  "missing_interval_count": 0,
+  "evidence_gap_count": 0,
+  "conflict_count": 0,
+  "receipt_chain_healthy": true,
+  "live_collector_healthy": true,
+  "backfill_complete": true,
+  "clock_evidence_status": "ACCEPTABLE",
+  "future_chronological_three_part_split_structurally_feasible": true,
+  "readiness_watcher_state": "active",
+  "source_commit_integrity": false,
+  "failed_verification_gate": "STANDALONE_FRESH_CLONE_BUILD",
+  "failure_evidence": "internal/r1p5/coverage.go is ignored by coverage.* and absent from receipt-bound source commit 59951efd756a8024455608d298c5534c778e5121",
+  "label": "PR4B0_R1P5_COLLECTION_REMEDIATION_REQUIRED",
+  "artifact_hash": "sha256:1c1a7418c22f423c43489eb3ce9b0239515100db785f94c665aef79fbd542412"
+}

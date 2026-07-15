@@ -1,3 +1,3 @@
-# R1P5 collection health
+# R1P5 collection health — source remediation required
 
-The canonical machine-readable authority is `pr4b0_r1p5_collection_health.json`. This report contains structural coverage and acquisition evidence only; no candidate implementation, result, partition, or RIF state was read or created.
+Both receipt chains and both timers are healthy, but the frozen source commit fails standalone reproduction. See `pr4b0_r1p5_source_integrity_failure.json`.

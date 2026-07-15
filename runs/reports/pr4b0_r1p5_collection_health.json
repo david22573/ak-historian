@@ -1,1 +1,19 @@
-{"artifact_hash":"sha256:311b2cbb6e54b46897f7437568fb95f6c44a1f2bf9c0c906ec4f3298e98be5e9","backfill_chain_terminal":"sha256:645567987688724cc29d0472b30634aaae74b5688880bb9e3ab6363516154e7f","backfill_chain_valid":true,"clock_errors":0,"conflicts":0,"evidence_gaps":0,"generated_at_utc":"2026-07-15T09:42:58.527916392Z","live_chain_terminal":"sha256:ece4f8c46708bd179f166e301810ec4d9ab19702c0e7249d5f3ed80dd6e25868","live_chain_valid":true,"live_receipts":1584,"live_timer_state":"active","schema_errors":0,"schema_version":"ak-historian.pr4b0-r1p5.collection-health.v1","watch_timer_state":"active"}
+{
+  "schema_version": "ak-historian.pr4b0-r1p5.collection-health.v1",
+  "generated_at_utc": "2026-07-15T09:59:09.374388997Z",
+  "live_receipts": 1584,
+  "live_chain_terminal": "sha256:ece4f8c46708bd179f166e301810ec4d9ab19702c0e7249d5f3ed80dd6e25868",
+  "live_chain_valid": true,
+  "backfill_receipts": 2529,
+  "backfill_chain_terminal": "sha256:645567987688724cc29d0472b30634aaae74b5688880bb9e3ab6363516154e7f",
+  "backfill_chain_valid": true,
+  "conflicts": 0,
+  "schema_errors": 0,
+  "evidence_gaps": 0,
+  "clock_errors": 0,
+  "live_timer_state": "active",
+  "watch_timer_state": "active",
+  "source_commit_integrity": false,
+  "failed_verification_gate": "STANDALONE_FRESH_CLONE_BUILD",
+  "artifact_hash": "sha256:ee465a30e1d24b975d38729844a9df6f950120f8d731f540f438799aa1c8b96f"
+}
