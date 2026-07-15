@@ -1,0 +1,11 @@
+[Unit]
+Description=Run AK Historian R1P5 structural readiness watch hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=0
+Unit=ak-historian-readiness-watch.service
+
+[Install]
+WantedBy=timers.target

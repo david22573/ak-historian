@@ -178,6 +178,27 @@ func (client *Client) Klines(ctx context.Context, symbol string, startTime int64
 	return evidence, params, err
 }
 
+// KlinesRange performs one explicitly bounded public historical request. Both
+// boundaries are candle-open milliseconds and endTime is inclusive. The limit
+// is frozen to Binance's supported maximum page size for deterministic backfill.
+func (client *Client) KlinesRange(ctx context.Context, symbol string, startTime, endTime int64) (ResponseEvidence, string, error) {
+	if !contains(UniqueSymbols, symbol) {
+		return ResponseEvidence{}, "", fmt.Errorf("symbol %s is not in the frozen universe", symbol)
+	}
+	if startTime <= 0 || endTime < startTime || endTime-startTime >= 1000*60000 || startTime%60000 != 0 || endTime%60000 != 0 {
+		return ResponseEvidence{}, "", errors.New("invalid bounded one-minute kline range")
+	}
+	values := url.Values{}
+	values.Set("endTime", strconv.FormatInt(endTime, 10))
+	values.Set("interval", "1m")
+	values.Set("limit", "1000")
+	values.Set("startTime", strconv.FormatInt(startTime, 10))
+	values.Set("symbol", symbol)
+	params := values.Encode()
+	evidence, err := client.get(ctx, KlineEndpoint+"?"+params)
+	return evidence, params, err
+}
+
 func ParseKlines(body []byte, symbol string, providerTime time.Time) ([]NormalizedCandle, error) {
 	decoder := json.NewDecoder(strings.NewReader(string(body)))
 	decoder.UseNumber()

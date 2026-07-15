@@ -1,0 +1,14 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5.readiness-policy.v1",
+  "minimum_contiguous_complete_utc_days": 180,
+  "required_symbols": ["ADAUSDT", "AVAXUSDT", "BNBUSDT", "BTCUSDT", "DOGEUSDT", "ETHUSDT", "LINKUSDT", "SOLUSDT", "XRPUSDT"],
+  "required_partition_classification": "UNEXPOSED_PIT_EVIDENCE_COMPLETE",
+  "conditions": ["exact minute sequence", "all nine symbols", "no missing intervals", "no duplicates", "no conflicts", "valid source schema", "complete receipt/raw/fragment evidence", "valid provider-time and synchronized-clock evidence", "contiguous exposure classification", "immutable checkpoint", "clean verification", "live collector healthy", "readiness watcher active", "zero candidate or real RIF operations"],
+  "future_partition_feasibility_only": true,
+  "candidate_counts_forbidden": true,
+  "reporting_cadence_seconds": 3600,
+  "not_ready_label": "PR4B0_R1P5_COVERAGE_WATCH_ACTIVE",
+  "ready_label": "PR4B0_R1P5_STRUCTURAL_COVERAGE_READY",
+  "remediation_label": "PR4B0_R1P5_COLLECTION_REMEDIATION_REQUIRED",
+  "policy_hash": "sha256:1dc7f4ef075304074da779a57e0650a497dd31cdc324813154acc5ac276e3c08"
+}

@@ -1,4 +1,4 @@
-.PHONY: fmt test vet build verify build-prospective run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
+.PHONY: fmt test vet build verify build-prospective build-r1p5 verify-r1p5 run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
 
 fmt:
 	go fmt ./...
@@ -14,6 +14,12 @@ build:
 
 build-prospective:
 	GOWORK=off go build -buildvcs=false -trimpath -ldflags "-X github.com/david22573/ak-historian/internal/prospective.CollectorSourceCommit=$$(git rev-parse HEAD)" -o ./bin/ak-historian ./cmd/ak-historian
+
+build-r1p5:
+	GOWORK=off go build -buildvcs=false -trimpath -ldflags "-X github.com/david22573/ak-historian/internal/r1p5.BackfillSourceCommit=$${R1P5_SOURCE_COMMIT:-$$(git rev-parse HEAD)}" -o ./bin/ak-historian-r1p5 ./cmd/ak-historian
+
+verify-r1p5:
+	./scripts/verify_pr4b0_r1p5_source.sh
 
 verify:
 	./scripts/verify.sh

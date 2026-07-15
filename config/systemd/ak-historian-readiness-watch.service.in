@@ -1,0 +1,9 @@
+[Unit]
+Description=AK Historian R1P5 structural readiness watch
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{BINARY}} prospective-readiness-watch --repository-root {{REPOSITORY_ROOT}} --data-root {{BACKFILL_DATA_ROOT}} --live-data-root {{LIVE_DATA_ROOT}} --activation {{ACTIVATION}}
+NoNewPrivileges=true
+PrivateTmp=true

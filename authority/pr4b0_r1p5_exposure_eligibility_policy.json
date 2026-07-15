@@ -1,0 +1,19 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5.exposure-eligibility-policy.v1",
+  "prior_exposure_ledger_version": "ak.engine.prior-exposure-ledger.v1",
+  "prior_exposure_ledger_hash": "sha256:5756897fe8f38591a0b181433242667b4f0fe477b6aaa92aa13cf2ae61f2bab2",
+  "inspection_audit_version": "ak.engine.pr4b0-r1p2-inspection-audit.v1",
+  "inspection_audit_hash": "sha256:68b25e70267ea1459520f3fb545b4247dbf03be6b041269284ce6529165878c2",
+  "barred_floor_utc": "2024-01-01T00:00:00Z",
+  "eligible_floor_utc": "2026-01-01T00:00:00Z",
+  "classifications": ["BARRED_PRIOR_OUTCOME_EXPOSURE", "UNEXPOSED_PHYSICAL_ONLY", "UNEXPOSED_PIT_EVIDENCE_COMPLETE", "UNEXPOSED_PIT_EVIDENCE_INCOMPLETE", "CONFLICT"],
+  "rules": [
+    "Reacquisition never erases prior exposure.",
+    "The interval [2024-01-01T00:00:00Z,2026-01-01T00:00:00Z) remains barred.",
+    "Any newly discovered exposure at or after the eligible floor moves the eligible start forward to the first conservatively unexposed minute.",
+    "Unknown inspection scope fails closed.",
+    "Physical validity without complete immutable acquisition evidence is not PIT eligible.",
+    "Classification uses exposure and acquisition authority only and never candidate behavior or performance."
+  ],
+  "policy_hash": "sha256:516595c5031a554cbd7f1fa4814bad04b285f6bb4babd5cca556f7469ee20316"
+}

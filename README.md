@@ -1,5 +1,21 @@
 # ak-historian
 
+## PR4B0-R1P5 structural coverage
+
+The R1P5 commands authoritatively reacquire the frozen unexposed 2026 range and report structural/PIT evidence only:
+
+```text
+prospective-backfill
+prospective-backfill-status
+prospective-backfill-verify
+prospective-eligibility-ledger
+prospective-coverage-checkpoint
+prospective-readiness
+prospective-readiness-watch
+```
+
+Build the dedicated backfill/watcher binary with `make build-r1p5`. It embeds the exact committed R1P5 source identity and intentionally cannot run the P4 live collector. Historical and live roots, locks, cursors, and chains remain separate. No R1P5 command imports or invokes Engine candidate code or creates RIF state.
+
 Bulk backfill tool for Binance historical data, coded in Go.
 
 ## Overview
