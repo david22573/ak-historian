@@ -1,8 +1,8 @@
 {
   "schema_version": "ak-historian.pr4b0-r1p5.collection-health.v1",
-  "generated_at_utc": "2026-07-15T09:59:09.374388997Z",
-  "live_receipts": 1584,
-  "live_chain_terminal": "sha256:ece4f8c46708bd179f166e301810ec4d9ab19702c0e7249d5f3ed80dd6e25868",
+  "generated_at_utc": "2026-07-15T10:07:58.835082359Z",
+  "live_receipts": 1620,
+  "live_chain_terminal": "sha256:e2dc843b8da83413325087ca076508efabcefe51fc736d928a254298225a20d8",
   "live_chain_valid": true,
   "backfill_receipts": 2529,
   "backfill_chain_terminal": "sha256:645567987688724cc29d0472b30634aaae74b5688880bb9e3ab6363516154e7f",
@@ -12,8 +12,8 @@
   "evidence_gaps": 0,
   "clock_errors": 0,
   "live_timer_state": "active",
-  "watch_timer_state": "active",
+  "watch_timer_state": "disabled",
   "source_commit_integrity": false,
   "failed_verification_gate": "STANDALONE_FRESH_CLONE_BUILD",
-  "artifact_hash": "sha256:ee465a30e1d24b975d38729844a9df6f950120f8d731f540f438799aa1c8b96f"
+  "artifact_hash": "sha256:e963ec37476e130601973d6d47a57f42917a0b7ecd020550a9612e9110c8acb6"
 }

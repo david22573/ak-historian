@@ -1,6 +1,6 @@
 {
   "schema_version": "ak-historian.pr4b0-r1p5.readiness-status.v1",
-  "generated_at_utc": "2026-07-15T09:59:09.374388997Z",
+  "generated_at_utc": "2026-07-15T10:07:58.835082359Z",
   "immutable_checkpoint": "r1p5-checkpoint-20260715T094258Z",
   "checkpoint_hash": "sha256:7d2cb161941deab10896ef95ecc04db7455501fb2621eca4a3ff4b87fa82e1b7",
   "contiguous_eligible_start_utc": "2026-01-01T00:00:00Z",
@@ -27,10 +27,10 @@
   "backfill_complete": true,
   "clock_evidence_status": "ACCEPTABLE",
   "future_chronological_three_part_split_structurally_feasible": true,
-  "readiness_watcher_state": "active",
+  "readiness_watcher_state": "DISABLED_FAIL_CLOSED_SOURCE_INTEGRITY",
   "source_commit_integrity": false,
   "failed_verification_gate": "STANDALONE_FRESH_CLONE_BUILD",
   "failure_evidence": "internal/r1p5/coverage.go is ignored by coverage.* and absent from receipt-bound source commit 59951efd756a8024455608d298c5534c778e5121",
   "label": "PR4B0_R1P5_COLLECTION_REMEDIATION_REQUIRED",
-  "artifact_hash": "sha256:1c1a7418c22f423c43489eb3ce9b0239515100db785f94c665aef79fbd542412"
+  "artifact_hash": "sha256:d7d0850b94bfac0ea41afd15286216ef3a1dc6a9ec90d84d94823e17feac357d"
 }

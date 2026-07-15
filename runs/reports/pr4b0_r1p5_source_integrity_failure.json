@@ -11,6 +11,7 @@
   "other_untracked_go_source": [],
   "historical_requests_had_started": true,
   "source_replacement_permitted": false,
+  "readiness_watcher_disposition": "DISABLED_FAIL_CLOSED_TO_PREVENT_FALSE_READY_OVERWRITE",
   "disposition": "COLLECTION_REMEDIATION_REQUIRED",
-  "artifact_hash": "sha256:c44a87288aee72b3300f0f4c781eea229fc87509b7df43473fa7ab93b89fe907"
+  "artifact_hash": "sha256:2a9d967b3bd61ed3d0ce17ea553f66b336433a15dd3e90c16c76d20533e4582f"
 }
