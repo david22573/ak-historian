@@ -108,9 +108,6 @@ func (s *Store) RebuildState() (State, []LedgerEntry, error) {
 		if receipt.ReceiptHash != entry.ReceiptHash || receipt.PriorReceiptChainHash != entry.PriorChainHash {
 			return errors.New("ledger receipt binding invalid")
 		}
-		if err := s.verifyObjects(receipt); err != nil {
-			return err
-		}
 		cursor := state.Cursors[receipt.Symbol]
 		if receipt.RequestedStartUTC != cursor.NextOpenUTC {
 			return fmt.Errorf("non-contiguous durable cursor for %s", receipt.Symbol)
@@ -179,48 +176,59 @@ func (s *Store) verifyObjects(r Receipt) error {
 }
 
 func (s *Store) Commit(receipt Receipt, raw, fragmentData []byte) (LedgerEntry, error) {
-	rawPath, err := s.absolute(receipt.RawPath)
+	state, _, err := s.RebuildState()
 	if err != nil {
 		return LedgerEntry{}, err
 	}
+	entry, _, err := s.CommitPrepared(receipt, raw, fragmentData, state)
+	return entry, err
+}
+
+// CommitPrepared commits one page against a state already rebuilt and verified
+// by the single-instance collector. This keeps acquisition linear in page count.
+func (s *Store) CommitPrepared(receipt Receipt, raw, fragmentData []byte, state State) (LedgerEntry, State, error) {
+	rawPath, err := s.absolute(receipt.RawPath)
+	if err != nil {
+		return LedgerEntry{}, State{}, err
+	}
 	fragmentPath, err := s.absolute(receipt.FragmentPath)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	receiptRelative := receiptPath(receipt.Symbol, receipt.RequestedStartUTC)
 	receiptPathAbs, err := s.absolute(receiptRelative)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	if existing, err := os.ReadFile(receiptPathAbs); err == nil {
 		var prior Receipt
 		if prospective.StrictDecode(existing, &prior) != nil || prior.ReceiptHash != receipt.ReceiptHash {
-			return LedgerEntry{}, errors.New("conflicting receipt at immutable request identity")
+			return LedgerEntry{}, State{}, errors.New("conflicting receipt at immutable request identity")
 		}
-		return s.commitLedger(prior, receiptRelative)
+		return s.commitLedgerPrepared(prior, receiptRelative, state)
 	}
 	compressedRaw, err := gzipCanonical(raw)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	compressedFragment, err := gzipCanonical(fragmentData)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	if err := writeImmutable(rawPath, compressedRaw, 0o444); err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	if err := writeImmutable(fragmentPath, compressedFragment, 0o444); err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	receiptData, err := prospective.CanonicalJSON(receipt)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	if err := writeImmutable(receiptPathAbs, receiptData, 0o444); err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
-	return s.commitLedger(receipt, receiptRelative)
+	return s.commitLedgerPrepared(receipt, receiptRelative, state)
 }
 
 func writeImmutable(path string, data []byte, mode os.FileMode) error {
@@ -245,18 +253,24 @@ func (s *Store) commitLedger(receipt Receipt, receiptRelative string) (LedgerEnt
 			return entry, nil
 		}
 	}
+	entry, _, err := s.commitLedgerPrepared(receipt, receiptRelative, state)
+	return entry, err
+}
+
+func (s *Store) commitLedgerPrepared(receipt Receipt, receiptRelative string, state State) (LedgerEntry, State, error) {
 	if receipt.PriorReceiptChainHash != state.ChainTerminal || receipt.RequestedStartUTC != state.Cursors[receipt.Symbol].NextOpenUTC {
-		return LedgerEntry{}, errors.New("orphan receipt no longer joins current durable chain")
+		return LedgerEntry{}, State{}, errors.New("orphan receipt no longer joins current durable chain")
 	}
 	completed := time.Now().UTC()
 	entry := LedgerEntry{SchemaVersion: LedgerVersion, Sequence: state.NextSequence, ReceiptPath: receiptRelative, ReceiptHash: receipt.ReceiptHash, PriorChainHash: state.ChainTerminal, DurableCompletionUTC: completed, EvaluationCutoffFloor: completed.Add(time.Nanosecond)}
-	entry.CurrentChainHash, err = prospective.HashCanonical(entry, "current_chain_hash")
+	hash, err := prospective.HashCanonical(entry, "current_chain_hash")
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
+	entry.CurrentChainHash = hash
 	data, _ := prospective.CanonicalJSON(entry)
 	if err := prospective.AppendDurable(s.LedgerPath(), data); err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	state.Cursors[receipt.Symbol] = Cursor{NextOpenUTC: receipt.RequestedEndExclusiveUTC, Requests: state.Cursors[receipt.Symbol].Requests + 1, Rows: state.Cursors[receipt.Symbol].Rows + receipt.ParsedRowCount}
 	state.NextSequence++
@@ -264,9 +278,9 @@ func (s *Store) commitLedger(receipt Receipt, receiptRelative string) (LedgerEnt
 	state.StateHash, _ = prospective.HashCanonical(state, "state_hash")
 	stateData, _ := prospective.CanonicalJSON(state)
 	if err := prospective.WriteAtomic(s.StatePath(), stateData, 0o600); err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
-	return entry, nil
+	return entry, state, nil
 }
 
 func receiptPath(symbol string, start time.Time) string {
@@ -282,6 +296,9 @@ func (s *Store) VerifyAll(now time.Time) (Verification, error) {
 	for _, entry := range entries {
 		r, err := s.readReceipt(entry.ReceiptPath)
 		if err != nil {
+			return Verification{}, err
+		}
+		if err := s.verifyObjects(r); err != nil {
 			return Verification{}, err
 		}
 		v.CandleCount += r.ParsedRowCount

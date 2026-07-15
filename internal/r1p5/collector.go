@@ -60,12 +60,12 @@ func (c *Collector) CollectAll(ctx context.Context) (BackfillStatus, error) {
 		return BackfillStatus{}, err
 	}
 	defer lock.Close()
+	state, _, err := c.Store.RebuildState()
+	if err != nil {
+		return BackfillStatus{}, err
+	}
 	for _, symbol := range prospective.UniqueSymbols {
 		for {
-			state, _, err := c.Store.RebuildState()
-			if err != nil {
-				return BackfillStatus{}, err
-			}
 			start := state.Cursors[symbol].NextOpenUTC
 			endBoundary := c.Config.Protocol.BackfillEnds[symbol]
 			if !start.Before(endBoundary) {
@@ -75,13 +75,16 @@ func (c *Collector) CollectAll(ctx context.Context) (BackfillStatus, error) {
 			if end.After(endBoundary) {
 				end = endBoundary
 			}
-			if recovered, err := c.recoverOrphan(state, symbol, start); err != nil {
+			if recovered, recoveredState, err := c.recoverOrphan(state, symbol, start); err != nil {
 				return BackfillStatus{}, err
 			} else if recovered {
+				state = recoveredState
 				continue
 			}
-			if _, err := c.collectPage(ctx, state, symbol, start, end); err != nil {
+			if _, nextState, err := c.collectPage(ctx, state, symbol, start, end); err != nil {
 				return BackfillStatus{}, err
+			} else {
+				state = nextState
 			}
 			if c.Delay > 0 {
 				select {
@@ -95,54 +98,55 @@ func (c *Collector) CollectAll(ctx context.Context) (BackfillStatus, error) {
 	return c.Status()
 }
 
-func (c *Collector) recoverOrphan(state State, symbol string, start time.Time) (bool, error) {
+func (c *Collector) recoverOrphan(state State, symbol string, start time.Time) (bool, State, error) {
 	relative := receiptPath(symbol, start)
 	absolute, err := c.Store.absolute(relative)
 	if err != nil {
-		return false, err
+		return false, State{}, err
 	}
 	if _, err := os.Stat(absolute); errors.Is(err, os.ErrNotExist) {
-		return false, nil
+		return false, state, nil
 	} else if err != nil {
-		return false, err
+		return false, State{}, err
 	}
 	receipt, err := c.Store.readReceipt(relative)
 	if err != nil {
-		return false, err
+		return false, State{}, err
 	}
 	if receipt.PriorReceiptChainHash != state.ChainTerminal {
-		return false, errors.New("orphan receipt cannot join current chain")
+		return false, State{}, errors.New("orphan receipt cannot join current chain")
 	}
-	if _, err := c.Store.commitLedger(receipt, relative); err != nil {
-		return false, err
+	_, next, err := c.Store.commitLedgerPrepared(receipt, relative, state)
+	if err != nil {
+		return false, State{}, err
 	}
-	return true, nil
+	return true, next, nil
 }
 
-func (c *Collector) collectPage(ctx context.Context, state State, symbol string, start, end time.Time) (LedgerEntry, error) {
+func (c *Collector) collectPage(ctx context.Context, state State, symbol string, start, end time.Time) (LedgerEntry, State, error) {
 	clock, err := c.Clock.Check(ctx)
 	if err != nil {
-		return LedgerEntry{}, fmt.Errorf("clock evidence: %w", err)
+		return LedgerEntry{}, State{}, fmt.Errorf("clock evidence: %w", err)
 	}
 	providerTime, providerTimeHash, _, err := c.Client.ServerTime(ctx)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	evidence, params, err := c.Client.KlinesRange(ctx, symbol, start.UnixMilli(), end.Add(-time.Minute).UnixMilli())
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	records, err := prospective.ParseKlines(evidence.Body, symbol, providerTime)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	expected := int(end.Sub(start) / time.Minute)
 	if len(records) != expected {
-		return LedgerEntry{}, fmt.Errorf("partial response for %s [%s,%s): got %d want %d", symbol, start, end, len(records), expected)
+		return LedgerEntry{}, State{}, fmt.Errorf("partial response for %s [%s,%s): got %d want %d", symbol, start, end, len(records), expected)
 	}
 	for index, record := range records {
 		if record.OpenTimeMS != start.Add(time.Duration(index)*time.Minute).UnixMilli() {
-			return LedgerEntry{}, fmt.Errorf("non-contiguous response for %s at row %d", symbol, index)
+			return LedgerEntry{}, State{}, fmt.Errorf("non-contiguous response for %s at row %d", symbol, index)
 		}
 	}
 	observed := maxTime(evidence.CompleteResponseReceivedUTC, evidence.ProviderHTTPDateUTC, providerTime)
@@ -158,17 +162,17 @@ func (c *Collector) collectPage(ctx context.Context, state State, symbol string,
 	fragment := Fragment{SchemaVersion: FragmentVersion, RequestID: requestID, Symbol: symbol, SourceSchemaVersion: c.Config.Protocol.SourceSchemaVersion, SourceSchemaFingerprint: c.Config.Protocol.SourceSchemaFingerprint, Records: normalized}
 	fragment.FragmentHash, err = prospective.HashCanonical(fragment, "fragment_hash")
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	fragmentData, err := prospective.CanonicalJSON(fragment)
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
 	base := filepath.Join("symbol="+symbol, "start="+start.Format("20060102T150405Z")+".json.gz")
 	receipt := Receipt{SchemaVersion: ReceiptVersion, AcquisitionMode: Mode, RequestID: requestID, Symbol: symbol, RequestedStartUTC: start, RequestedEndExclusiveUTC: end, Endpoint: prospective.KlineEndpoint, CanonicalRequestParameters: params, RequestStartUTC: evidence.RequestStartUTC, ResponseHeadersReceivedUTC: evidence.ResponseHeadersReceivedUTC, CompleteResponseReceivedUTC: evidence.CompleteResponseReceivedUTC, ProviderHTTPDate: evidence.ProviderHTTPDate, ProviderHTTPDateUTC: evidence.ProviderHTTPDateUTC, ProviderServerTimeUTC: providerTime, ProviderServerTimeHash: providerTimeHash, ClockEvidence: clock, HTTPStatus: evidence.HTTPStatus, RetryNumber: evidence.RetryNumber, RawByteLength: len(evidence.Body), RawHash: prospective.HashBytes(evidence.Body), RawPath: filepath.ToSlash(filepath.Join("raw", base)), FragmentByteLength: len(fragmentData), FragmentHash: fragment.FragmentHash, FragmentPath: filepath.ToSlash(filepath.Join("fragments", base)), ParsedRowCount: len(records), FirstCandleOpenUTC: start, LastCandleCloseUTC: time.UnixMilli(records[len(records)-1].CloseTimeMS).UTC(), ObservedAvailableAtUTC: observed, AcquiredAtUTC: acquired, PriorReceiptChainHash: state.ChainTerminal, BackfillSourceCommit: c.Config.SourceIdentity.SourceCommit, ProtocolHash: c.Config.Protocol.ProtocolHash, P4CollectorSourceCommit: c.Config.Protocol.P4CollectorSourceCommit, AvailabilityPolicyVersion: c.Config.Protocol.AvailabilityPolicyVersion, AvailabilityPolicyHash: c.Config.Protocol.AvailabilityPolicyHash}
 	receipt.ReceiptHash, err = prospective.HashCanonical(receipt, "receipt_hash")
 	if err != nil {
-		return LedgerEntry{}, err
+		return LedgerEntry{}, State{}, err
 	}
-	return c.Store.Commit(receipt, evidence.Body, fragmentData)
+	return c.Store.CommitPrepared(receipt, evidence.Body, fragmentData, state)
 }

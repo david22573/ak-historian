@@ -140,7 +140,7 @@ func TestDurableCommitRestartAndMutation(t *testing.T) {
 	if err := os.WriteFile(rawPath, compressed, 0o444); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := store.RebuildState(); err == nil {
+	if _, err := store.VerifyAll(time.Now()); err == nil {
 		t.Fatal("raw mutation verified")
 	}
 }
