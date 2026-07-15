@@ -53,8 +53,22 @@ func LoadConfig(repositoryRoot, dataRoot, liveDataRoot, activationPath string) (
 
 func VerifyConfig(c Config) error {
 	p := c.Protocol
-	if p.SchemaVersion != ProtocolVersion || p.DatasetID == "" || p.AcceptedHistorianCommit != "da9a6db4fad3ee5d47347453e164af6405d21fb8" || p.P4CollectorSourceCommit != "598a9119be828daa7db76dacec017456807ccfed" || p.P4ProtocolHash != "sha256:671a27239d72e163428378dff926acc9f7a22036aff247cc8888ee9f06077311" || p.AvailabilityPolicyHash != "sha256:cbd4c1670830843d233b6b6c3dc3dac0489e3d38fc7854caf388b5e543dfc3e1" || p.SourceSchemaFingerprint != prospective.SourceSchemaFingerprint || p.ManifestContractHash != prospective.ManifestContractHash || p.IngestionReceiptHash != prospective.ReceiptSchemaHash || p.ReceiptLedgerVersion != LedgerVersion || p.ReceiptLedgerGenesisHash != ZeroHash || p.EligibleStartUTC.Format(timeLayout) != "2026-01-01T00:00:00Z" || p.AcquisitionMode != Mode || p.Venue != "Binance" || p.MarketType != "USD-M futures" || p.Timeframe != "1m" || !reflect.DeepEqual(p.Symbols, prospective.UniqueSymbols) || !strings.Contains(strings.ToLower(p.ResearchProhibition), "prohibit") {
-		return errors.New("frozen R1P5 protocol authority mismatch")
+	checks := []struct {
+		name string
+		ok   bool
+	}{
+		{"schema_version", p.SchemaVersion == ProtocolVersion}, {"dataset_id", p.DatasetID != ""}, {"accepted_historian_commit", p.AcceptedHistorianCommit == "da9a6db4fad3ee5d47347453e164af6405d21fb8"},
+		{"p4_collector_source_commit", p.P4CollectorSourceCommit == "598a9119be828daa7db76dacec017456807ccfed"}, {"p4_protocol_hash", p.P4ProtocolHash == "sha256:671a27239d72e163428378dff926acc9f7a22036aff247cc8888ee9f06077311"},
+		{"availability_policy_hash", p.AvailabilityPolicyHash == "sha256:cbd4c1670830843d233b6b6c3dc3dac0489e3d38fc7854caf388b5e543dfc3e1"}, {"source_schema_fingerprint", p.SourceSchemaFingerprint == prospective.SourceSchemaFingerprint},
+		{"manifest_contract_hash", p.ManifestContractHash == prospective.ManifestContractHash}, {"ingestion_receipt_hash", p.IngestionReceiptHash == prospective.ReceiptSchemaHash}, {"receipt_ledger_version", p.ReceiptLedgerVersion == LedgerVersion},
+		{"receipt_ledger_genesis_hash", p.ReceiptLedgerGenesisHash == ZeroHash}, {"eligible_start", p.EligibleStartUTC.Format(timeLayout) == "2026-01-01T00:00:00Z"}, {"acquisition_mode", p.AcquisitionMode == Mode},
+		{"venue", p.Venue == "Binance"}, {"market_type", p.MarketType == "USD-M futures"}, {"timeframe", p.Timeframe == "1m"}, {"symbol_universe", reflect.DeepEqual(p.Symbols, prospective.UniqueSymbols)},
+		{"research_prohibition", strings.Contains(strings.ToLower(p.ResearchProhibition), "do not")},
+	}
+	for _, check := range checks {
+		if !check.ok {
+			return fmt.Errorf("frozen R1P5 protocol authority mismatch: %s", check.name)
+		}
 	}
 	if err := prospective.VerifyCanonicalHash(p, "protocol_hash", p.ProtocolHash); err != nil {
 		return err
