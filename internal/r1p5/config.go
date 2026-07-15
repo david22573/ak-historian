@@ -3,6 +3,7 @@ package r1p5
 import (
 	"errors"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -27,16 +28,32 @@ func LoadConfig(repositoryRoot, dataRoot, liveDataRoot, activationPath string) (
 		return Config{}, errors.New("repository, backfill data, live data, and activation paths are required")
 	}
 	c := Config{RepositoryRoot: filepath.Clean(repositoryRoot), DataRoot: filepath.Clean(dataRoot), LiveDataRoot: filepath.Clean(liveDataRoot), ActivationPath: filepath.Clean(activationPath)}
-	read := func(name string, target any) error {
-		return prospective.ReadStrict(filepath.Join(c.RepositoryRoot, "authority", name), target)
+	read := func(name, hashField string, target any) error {
+		path := filepath.Join(c.RepositoryRoot, "authority", name)
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		var complete map[string]any
+		if err := prospective.StrictDecode(data, &complete); err != nil {
+			return err
+		}
+		recorded, ok := complete[hashField].(string)
+		if !ok {
+			return fmt.Errorf("%s is missing", hashField)
+		}
+		if err := prospective.VerifyCanonicalHash(complete, hashField, recorded); err != nil {
+			return err
+		}
+		return prospective.StrictDecode(data, target)
 	}
-	if err := read("pr4b0_r1p5_coverage_protocol.json", &c.Protocol); err != nil {
+	if err := read("pr4b0_r1p5_coverage_protocol.json", "protocol_hash", &c.Protocol); err != nil {
 		return Config{}, fmt.Errorf("protocol: %w", err)
 	}
-	if err := read("pr4b0_r1p5_exposure_eligibility_policy.json", &c.ExposurePolicy); err != nil {
+	if err := read("pr4b0_r1p5_exposure_eligibility_policy.json", "policy_hash", &c.ExposurePolicy); err != nil {
 		return Config{}, fmt.Errorf("exposure policy: %w", err)
 	}
-	if err := read("pr4b0_r1p5_readiness_policy.json", &c.ReadinessPolicy); err != nil {
+	if err := read("pr4b0_r1p5_readiness_policy.json", "policy_hash", &c.ReadinessPolicy); err != nil {
 		return Config{}, fmt.Errorf("readiness policy: %w", err)
 	}
 	if err := prospective.ReadStrict(filepath.Join(c.RepositoryRoot, filepath.FromSlash(c.Protocol.SourceIdentityPath)), &c.SourceIdentity); err != nil {
@@ -70,9 +87,6 @@ func VerifyConfig(c Config) error {
 			return fmt.Errorf("frozen R1P5 protocol authority mismatch: %s", check.name)
 		}
 	}
-	if err := prospective.VerifyCanonicalHash(p, "protocol_hash", p.ProtocolHash); err != nil {
-		return err
-	}
 	if len(p.BarredIntervals) != 1 || p.BarredIntervals[0].StartUTC.Format(timeLayout) != "2024-01-01T00:00:00Z" || p.BarredIntervals[0].EndUTC != p.EligibleStartUTC {
 		return errors.New("barred exposure boundary mismatch")
 	}
@@ -86,15 +100,9 @@ func VerifyConfig(c Config) error {
 	if e.SchemaVersion != ExposurePolicyVersion || e.ExposureLedgerHash != "sha256:5756897fe8f38591a0b181433242667b4f0fe477b6aaa92aa13cf2ae61f2bab2" || e.InspectionAuditHash != "sha256:68b25e70267ea1459520f3fb545b4247dbf03be6b041269284ce6529165878c2" || e.EligibleFloorUTC != p.EligibleStartUTC {
 		return errors.New("exposure eligibility authority mismatch")
 	}
-	if err := prospective.VerifyCanonicalHash(e, "policy_hash", e.PolicyHash); err != nil {
-		return err
-	}
 	r := c.ReadinessPolicy
 	if r.SchemaVersion != ReadinessPolicyVersion || r.MinimumDays != 180 || !reflect.DeepEqual(r.RequiredSymbols, prospective.UniqueSymbols) || !r.CandidateCountsForbidden || !r.FeasibilityOnly {
 		return errors.New("readiness policy authority mismatch")
-	}
-	if err := prospective.VerifyCanonicalHash(r, "policy_hash", r.PolicyHash); err != nil {
-		return err
 	}
 	i := c.SourceIdentity
 	if i.SchemaVersion != SourceIdentityVersion || i.SourceCommit != BackfillSourceCommit || i.ProtocolHash != p.ProtocolHash {

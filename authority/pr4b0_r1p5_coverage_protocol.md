@@ -2,7 +2,7 @@
 
 Identity: `ak-historian.pr4b0-r1p5.coverage-protocol.v1`
 
-Hash: `sha256:29c7c8d3ed89807cfb4affa768075fce39dc6be190a766e42691fba20384c91a`
+Hash: `sha256:528ecb47662122c4e91951be60523c5e4f24c3230ac4f06d1a1243e0942da6f3`
 
 This frozen protocol authorizes only public, unauthenticated Binance USD-M Futures one-minute historical reacquisition for the nine declared symbols. The eligible start is `2026-01-01T00:00:00Z`. Exact per-symbol ends join the first accepted P4 live receipt without an ambiguous gap. Backfill and live collection use separate binaries, roots, locks, cursors, and receipt chains.
 

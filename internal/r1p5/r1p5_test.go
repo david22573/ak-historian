@@ -324,3 +324,27 @@ func TestSecurityBoundaryStatic(t *testing.T) {
 }
 
 func execCandidateProbe(context.Context) (struct{}, error) { return struct{}{}, os.ErrNotExist }
+
+func TestCommittedAuthorityHashesUseGoCanonicalJSON(t *testing.T) {
+	for _, item := range []struct{ path, field string }{
+		{"../../authority/pr4b0_r1p5_coverage_protocol.json", "protocol_hash"},
+		{"../../authority/pr4b0_r1p5_exposure_eligibility_policy.json", "policy_hash"},
+		{"../../authority/pr4b0_r1p5_readiness_policy.json", "policy_hash"},
+	} {
+		data, err := os.ReadFile(item.path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var object map[string]any
+		if err := prospective.StrictDecode(data, &object); err != nil {
+			t.Fatal(err)
+		}
+		recorded, ok := object[item.field].(string)
+		if !ok {
+			t.Fatalf("%s missing %s", item.path, item.field)
+		}
+		if err := prospective.VerifyCanonicalHash(object, item.field, recorded); err != nil {
+			t.Fatalf("%s: %v", item.path, err)
+		}
+	}
+}

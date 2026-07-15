@@ -11,13 +11,6 @@ for file in \
   jq -e . "$file" >/dev/null
 done
 
-test "$(jq -r .protocol_hash authority/pr4b0_r1p5_coverage_protocol.json)" = \
-  "sha256:$(jq -cS 'del(.protocol_hash)' authority/pr4b0_r1p5_coverage_protocol.json | sha256sum | awk '{print $1}')"
-for file in authority/pr4b0_r1p5_exposure_eligibility_policy.json authority/pr4b0_r1p5_readiness_policy.json; do
-  test "$(jq -r .policy_hash "$file")" = \
-    "sha256:$(jq -cS 'del(.policy_hash)' "$file" | sha256sum | awk '{print $1}')"
-done
-
 GOWORK=off go vet ./...
 GOWORK=off go test ./...
 GOWORK=off go test -race ./...

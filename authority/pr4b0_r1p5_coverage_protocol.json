@@ -52,5 +52,5 @@
   "live_backfill_concurrency": "Backfill uses a separate root, lock, cursor namespace, receipt chain, and binary; it never takes or mutates the P4 live collector lock, state, receipts, or cursors.",
   "readiness_policy": "Structural readiness requires at least 180 consecutive all-symbol UNEXPOSED_PIT_EVIDENCE_COMPLETE UTC days and every frozen structural condition; candidate code and candidate counts are forbidden.",
   "candidate_research_prohibition": "Do not execute, calculate, inspect, reveal, or summarize candidate signals, events, exclusions, clusters, outcomes, returns, performance, parameters, research partitions, validation, or holdout state; do not create real RIF state.",
-  "protocol_hash": "sha256:29c7c8d3ed89807cfb4affa768075fce39dc6be190a766e42691fba20384c91a"
+  "protocol_hash": "sha256:528ecb47662122c4e91951be60523c5e4f24c3230ac4f06d1a1243e0942da6f3"
 }
