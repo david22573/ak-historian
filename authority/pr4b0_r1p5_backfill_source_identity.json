@@ -1,7 +1,7 @@
 {
   "schema_version": "ak-historian.pr4b0-r1p5.backfill-source-identity.v1",
-  "backfill_source_commit": "87354374fec9f52377e588575de35b072dd39924",
-  "protocol_hash": "sha256:29c7c8d3ed89807cfb4affa768075fce39dc6be190a766e42691fba20384c91a",
-  "created_at_utc": "2026-07-15T08:47:57.185130764Z",
-  "identity_hash": "sha256:90db4c16c95a8fcc5ed7fa331c59af92ba2740d91650af33e5c11232912531d1"
+  "backfill_source_commit": "59951efd756a8024455608d298c5534c778e5121",
+  "protocol_hash": "sha256:528ecb47662122c4e91951be60523c5e4f24c3230ac4f06d1a1243e0942da6f3",
+  "created_at_utc": "2026-07-15T08:51:45.786269664Z",
+  "identity_hash": "sha256:531c1a5e0aeaa283422ecf5c652080aca6da99f30f58ac4e3e7c918f1948538b"
 }

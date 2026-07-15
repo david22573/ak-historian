@@ -11,6 +11,12 @@
       "identity_hash": "sha256:002e87da844076dae1424f2d116fa364ac74051559853f38f1e2457d5386a228",
       "disposition": "ABANDONED_BEFORE_ANY_HISTORICAL_REQUEST",
       "reason": "Runtime preflight exposed a validator/literal mismatch before any data root or request was created."
+    },
+    {
+      "backfill_source_commit": "87354374fec9f52377e588575de35b072dd39924",
+      "identity_hash": "sha256:90db4c16c95a8fcc5ed7fa331c59af92ba2740d91650af33e5c11232912531d1",
+      "disposition": "ABANDONED_BEFORE_ANY_HISTORICAL_REQUEST",
+      "reason": "Runtime preflight proved that the earlier jq-derived hashes did not match the protocol's required Go canonical serialization; the data root remained empty."
     }
   ]
 }
