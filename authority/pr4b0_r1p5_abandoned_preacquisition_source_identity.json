@@ -4,5 +4,13 @@
   "protocol_hash": "sha256:29c7c8d3ed89807cfb4affa768075fce39dc6be190a766e42691fba20384c91a",
   "original_identity_hash": "sha256:ee0aa976ca889d1bf438a3c5f597844bea7b5c1561a30777d260b90a674b3847",
   "disposition": "ABANDONED_BEFORE_ANY_HISTORICAL_REQUEST",
-  "reason": "Pre-acquisition performance audit found quadratic archive re-verification on each page; no acquisition evidence binds this source."
+  "reason": "Pre-acquisition performance audit found quadratic archive re-verification on each page; no acquisition evidence binds this source.",
+  "additional_abandoned_sources": [
+    {
+      "backfill_source_commit": "223f10c8653c4430dd283db020206b0634a101c5",
+      "identity_hash": "sha256:002e87da844076dae1424f2d116fa364ac74051559853f38f1e2457d5386a228",
+      "disposition": "ABANDONED_BEFORE_ANY_HISTORICAL_REQUEST",
+      "reason": "Runtime preflight exposed a validator/literal mismatch before any data root or request was created."
+    }
+  ]
 }
