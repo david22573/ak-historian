@@ -1,0 +1,13 @@
+[Unit]
+Description=AK Historian R1P5R structural readiness watch
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=__SEALED_BINARY__ r1p5r-readiness-watch --repository-root __REPOSITORY_ROOT__ --data-root __R1P5R_DATA_ROOT__ --live-data-root __P4_LIVE_DATA_ROOT__ --activation __P4_ACTIVATION__
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=__REPOSITORY_REPORT_ROOT__ __R1P5R_DATA_ROOT__
+RestrictAddressFamilies=AF_UNIX
