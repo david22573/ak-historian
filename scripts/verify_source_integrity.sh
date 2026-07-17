@@ -14,7 +14,11 @@ archive_list=$(mktemp)
 archive_root=$(mktemp -d)
 trap 'rm -f "$all_go" "$tracked_go" "$archive_list"; rm -rf "$archive_root"' EXIT
 
-find internal cmd pkg -type f -name '*.go' -print 2>/dev/null | LC_ALL=C sort >"$all_go"
+for directory in internal cmd pkg; do
+  if test -d "$directory"; then
+    find "$directory" -type f -name '*.go' -print
+  fi
+done | LC_ALL=C sort >"$all_go"
 git ls-files 'internal/**/*.go' 'cmd/**/*.go' 'pkg/**/*.go' | LC_ALL=C sort >"$tracked_go"
 
 if ! diff -u "$tracked_go" "$all_go"; then
