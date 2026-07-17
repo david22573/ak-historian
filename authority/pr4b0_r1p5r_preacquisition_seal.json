@@ -1,0 +1,26 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5r.preacquisition-seal.v1",
+  "repair_implementation_commit": "fba40dc23a24afdc2ac03b76e5a2609df4b6116d",
+  "source_seal_commit": "a00d74d2acb41d7349748e748014850c253761e9",
+  "protocol_hash": "sha256:4a6857dba1211ca40d2de9a869084c536a4028796b71e09099436c0ba17ba3eb",
+  "source_identity_hash": "sha256:bfb5cfc9dd90d3f20c1987306d21182001a963895b00cc2db6ff279a2947c689",
+  "abandoned_evidence_registry_hash": "sha256:f8a47626a234544f34ae59846c330682e78943add69edb171c558287b35417ca",
+  "go_version": "go1.25.6",
+  "build_command": "CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GOWORK=off R1P5R_SOURCE_SEAL_COMMIT=a00d74d2acb41d7349748e748014850c253761e9 make build-r1p5r",
+  "build_environment": {
+    "CGO_ENABLED": "0",
+    "GOARCH": "amd64",
+    "GOOS": "linux",
+    "GOTOOLCHAIN": "auto",
+    "GOVERSION": "go1.25.6",
+    "GOWORK": "off"
+  },
+  "sealed_binary_sha256": "sha256:d700a2374172a65a82fc4bf71467e47c6815e24384b83d73fea025e2880a6ef0",
+  "verification_started_at_utc": "2026-07-17T06:19:47Z",
+  "verification_completed_at_utc": "2026-07-17T06:31:00Z",
+  "fresh_clone_path_class": "standalone temporary parent containing exactly one detached Historian clone and no sibling AK repository",
+  "fresh_clone_checks_passed": true,
+  "safety_scans_passed": true,
+  "no_acquisition_receipts_at_seal": true,
+  "seal_hash": "sha256:cc193c6aee0f58c56b68904c9fa8d51ca88cc0375d291481070f51bded5cff85"
+}
