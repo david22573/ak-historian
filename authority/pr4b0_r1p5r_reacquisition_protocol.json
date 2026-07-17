@@ -78,7 +78,7 @@
     "initial_backoff_milliseconds": 1000,
     "backoff_multiplier": 2,
     "minimum_inter_request_delay_milliseconds": 120,
-    "retry_statuses": [408, 418, 429, 500, 502, 503, 504]
+    "retry_statuses": [418, 429, 500, 502, 503, 504]
   },
   "provider_time_policy": "Fetch and retain provider server-time evidence for every bounded kline request; observed availability is the maximum of response-complete UTC, provider HTTP Date, and associated provider server time. Availability is never backdated.",
   "raw_response_retention": "Fetch response bytes again from the approved provider. Hash exact uncompressed bytes, retain them immutably with deterministic gzip, and never read an R1P5 raw or cached body as acquisition input.",
@@ -91,5 +91,5 @@
   "readiness_policy": "Structural readiness requires at least 180 consecutive all-symbol UNEXPOSED_PIT_EVIDENCE_COMPLETE UTC days, a valid new checkpoint, the new authority, and a valid P4 live chain. The watcher reads no candidate or RIF state.",
   "candidate_research_prohibition": "Do not invoke candidate code, inspect candidate artifacts, calculate outcomes, read research partitions, or create real RIF state during collection, checkpointing, or readiness.",
   "abandoned_evidence_prohibition": "Do not import any old R1P5 raw response, fragment, receipt, cursor, manifest, partition, chain entry, checkpoint, binary, or cached HTTP body. Old evidence may be read only by isolated forensic verification commands.",
-  "protocol_hash": "sha256:4a6857dba1211ca40d2de9a869084c536a4028796b71e09099436c0ba17ba3eb"
+  "protocol_hash": "sha256:7fd6c667d97a0ff3387e352d8c8e9b25ef5a744d641147ed66b98df75dcc0e1a"
 }
