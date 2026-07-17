@@ -1,0 +1,67 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5r.source-integrity.v1",
+  "generated_at_utc": "2026-07-17T06:46:35Z",
+  "accepted_starting_commit": "3864a0c4066b7859b821b534b79a9cc3ae012fa2",
+  "repair_implementation_commit": "fba40dc23a24afdc2ac03b76e5a2609df4b6116d",
+  "source_seal_commit": "a81d343b3ae20c45c6d78f45f53cec67f8777442",
+  "omitted_source": {
+    "relative_path": "internal/r1p5/coverage.go",
+    "forensic_copy_relative_path": "authority/forensics/pr4b0_r1p5_omitted_coverage_source.bin",
+    "sha256": "sha256:554e0514f2cb65ccd1c2da543de9983f95580605f9fdbd21d574285f73de128c",
+    "size_bytes": 15790,
+    "mode": "0644",
+    "filesystem_mtime": "2026-07-15T01:40:13.243189830-07:00",
+    "filesystem_ctime": "2026-07-15T01:40:13.243189830-07:00",
+    "filesystem_metadata_authoritative": false,
+    "tracked_in_repair_lineage": true,
+    "present_in_git_archive": true,
+    "present_in_fresh_clone": true,
+    "represented_as_present_in_59951efd": false
+  },
+  "forensic_review": {
+    "tracked_callers_compared": true,
+    "candidate_logic_found": false,
+    "outcome_calculation_found": false,
+    "credentials_found": false,
+    "order_endpoints_found": false,
+    "trader_imports_found": false,
+    "hidden_network_behavior_found": false,
+    "absolute_path_dependency_found": false,
+    "nondeterministic_identity_behavior_found": false,
+    "unsafe_filesystem_behavior_found": false
+  },
+  "failed_binary_relationship": {
+    "binary_sha256": "sha256:48fb71db25e4f0e615b15c6df354d169e24364fa78baf1a130513145a6c4263f",
+    "embedded_old_source_commit": true,
+    "embedded_omitted_source_path": true,
+    "embedded_coverage_symbols": true,
+    "binary_predated_first_durable_receipt": true,
+    "conclusion": "Strong best-available evidence that the ignored file was compiled into the failed binary; not reproducible or cryptographic source proof."
+  },
+  "superseded_preacquisition_seal": {
+    "source_seal_commit": "a00d74d2acb41d7349748e748014850c253761e9",
+    "evidence_commit": "fc45a5bc6cdeb666de28317142c653f2c3f8b603",
+    "protocol_hash": "sha256:4a6857dba1211ca40d2de9a869084c536a4028796b71e09099436c0ba17ba3eb",
+    "sealed_binary_sha256": "sha256:d700a2374172a65a82fc4bf71467e47c6815e24384b83d73fea025e2880a6ef0",
+    "receipt_count": 0,
+    "disposition": "SUPERSEDED_BEFORE_REQUEST_RETRY_POLICY_MISMATCH"
+  },
+  "repository_gates": {
+    "required_go_sources_tracked": true,
+    "required_go_sources_unignored": true,
+    "archive_package_graph_reproduced": true,
+    "fresh_clone_passed": true,
+    "deleted_source_negative_test_passed": true,
+    "ignored_required_source_negative_test_passed": true,
+    "tidy_clean": true,
+    "vet_passed": true,
+    "tests_passed": true,
+    "race_tests_passed": true,
+    "build_passed": true,
+    "make_verify_passed": true,
+    "safety_scans_passed": true
+  },
+  "sealed_binary_sha256": "sha256:c10fdf10255a8c88c817d5189b20ca7411be1fcd2ae64df8c07e2d1934054ae6",
+  "preacquisition_receipt_count": 0,
+  "artifact_hash": "sha256:b94b6817df6fb2f6f316b69171882939cce0959565148e6c8f07fa2b32741e3d"
+}
