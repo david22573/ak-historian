@@ -113,11 +113,11 @@ func VerifyConfig(c Config) error {
 		}
 	}
 	e := c.ExposurePolicy
-	if e.SchemaVersion != ExposurePolicyVersion || e.ExposureLedgerHash != "sha256:5756897fe8f38591a0b181433242667b4f0fe477b6aaa92aa13cf2ae61f2bab2" || e.InspectionAuditHash != "sha256:68b25e70267ea1459520f3fb545b4247dbf03be6b041269284ce6529165878c2" || e.EligibleFloorUTC != p.EligibleStartUTC {
+	if e.SchemaVersion != ExposurePolicyVersion || p.ExposurePolicyVersion != e.SchemaVersion || p.ExposurePolicyHash != e.PolicyHash || e.ExposureLedgerHash != "sha256:5756897fe8f38591a0b181433242667b4f0fe477b6aaa92aa13cf2ae61f2bab2" || e.InspectionAuditHash != "sha256:68b25e70267ea1459520f3fb545b4247dbf03be6b041269284ce6529165878c2" || e.EligibleFloorUTC != p.EligibleStartUTC {
 		return errors.New("exposure eligibility authority mismatch")
 	}
 	r := c.ReadinessPolicy
-	if r.SchemaVersion != ReadinessPolicyVersion || r.MinimumDays != 180 || !reflect.DeepEqual(r.RequiredSymbols, prospective.UniqueSymbols) || !r.CandidateCountsForbidden || !r.FeasibilityOnly {
+	if r.SchemaVersion != ReadinessPolicyVersion || p.ReadinessPolicyVersion != r.SchemaVersion || p.ReadinessPolicyHash != r.PolicyHash || p.CoveragePolicyHash != r.PolicyHash || r.MinimumDays != 180 || !reflect.DeepEqual(r.RequiredSymbols, prospective.UniqueSymbols) || !r.CandidateCountsForbidden || !r.FeasibilityOnly {
 		return errors.New("readiness policy authority mismatch")
 	}
 	i := c.SourceIdentity

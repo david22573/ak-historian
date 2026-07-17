@@ -1,0 +1,60 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5r.abandoned-evidence-registry.v1",
+  "created_at_utc": "2026-07-17T06:12:54Z",
+  "reasons": [
+    "SOURCE_COMMIT_NOT_REPRODUCIBLE",
+    "CHECKPOINT_NOT_RESEARCH_ELIGIBLE",
+    "RECEIPT_CHAIN_NOT_REUSABLE"
+  ],
+  "old_source_commit": "59951efd756a8024455608d298c5534c778e5121",
+  "old_checkpoint_id": "r1p5-checkpoint-20260715T094258Z",
+  "old_checkpoint_hash": "sha256:7d2cb161941deab10896ef95ecc04db7455501fb2621eca4a3ff4b87fa82e1b7",
+  "old_backfill_terminal": "sha256:645567987688724cc29d0472b30634aaae74b5688880bb9e3ab6363516154e7f",
+  "old_binary_hash": "sha256:48fb71db25e4f0e615b15c6df354d169e24364fa78baf1a130513145a6c4263f",
+  "omitted_source_forensic_hash": "sha256:554e0514f2cb65ccd1c2da543de9983f95580605f9fdbd21d574285f73de128c",
+  "preserved_artifacts": [
+    {
+      "relative_path": "authority/forensics/pr4b0_r1p5_omitted_coverage_source.bin",
+      "sha256": "sha256:554e0514f2cb65ccd1c2da543de9983f95580605f9fdbd21d574285f73de128c",
+      "disposition": "BYTE_EXACT_FORENSIC_COPY_ONLY"
+    },
+    {
+      "relative_path": "authority/pr4b0_r1p5_backfill_source_identity.json",
+      "sha256": "sha256:e8a586777de0761b2ff6c4fbd590104f9fbc0d2e40924b87c0a62373c49b6ebd",
+      "disposition": "PRESERVED_REJECTED_SOURCE_IDENTITY"
+    },
+    {
+      "relative_path": "runs/reports/pr4b0_r1p5_coverage_checkpoint.json",
+      "sha256": "sha256:49c1c118f9c67950b37f29804dbf5c6cad9d9e3e08dc23faa88db0a12851b553",
+      "disposition": "PRESERVED_REJECTED_CHECKPOINT"
+    },
+    {
+      "relative_path": "runs/reports/pr4b0_r1p5_backfill_summary.json",
+      "sha256": "sha256:fe11adc166d9cabdeebf07e5c93037b164da8294f7267eb99fcfcef84f2b8b44",
+      "disposition": "PRESERVED_REJECTED_CHAIN_SUMMARY"
+    },
+    {
+      "relative_path": "runs/reports/pr4b0_r1p5_source_integrity_failure.json",
+      "sha256": "sha256:895721c4e16f41971e2eec9b2c16881356c11ef316f5b547479adbcec19c0c7a",
+      "disposition": "PRESERVED_FAILURE_AUTHORITY"
+    },
+    {
+      "relative_path": "runtime-retained:bin/ak-historian-r1p5",
+      "sha256": "sha256:48fb71db25e4f0e615b15c6df354d169e24364fa78baf1a130513145a6c4263f",
+      "disposition": "PRESERVED_REJECTED_BINARY"
+    }
+  ],
+  "prohibited_inputs": [
+    "old raw responses",
+    "old normalized fragments",
+    "old receipts",
+    "old cursor files",
+    "old manifests",
+    "old partition files",
+    "old chain entries",
+    "old checkpoint files",
+    "old compiled binaries",
+    "old cached HTTP bodies"
+  ],
+  "registry_hash": "sha256:f8a47626a234544f34ae59846c330682e78943add69edb171c558287b35417ca"
+}

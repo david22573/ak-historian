@@ -1,0 +1,8 @@
+{
+  "schema_version": "ak-historian.pr4b0-r1p5r.source-identity.v1",
+  "repair_implementation_commit": "fba40dc23a24afdc2ac03b76e5a2609df4b6116d",
+  "protocol_hash": "sha256:4a6857dba1211ca40d2de9a869084c536a4028796b71e09099436c0ba17ba3eb",
+  "abandoned_evidence_registry_hash": "sha256:f8a47626a234544f34ae59846c330682e78943add69edb171c558287b35417ca",
+  "created_at_utc": "2026-07-17T06:12:54Z",
+  "identity_hash": "sha256:bfb5cfc9dd90d3f20c1987306d21182001a963895b00cc2db6ff279a2947c689"
+}

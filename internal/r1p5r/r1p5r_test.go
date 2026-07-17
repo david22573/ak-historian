@@ -379,3 +379,21 @@ func TestCommittedAuthorityHashesUseGoCanonicalJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestCommittedR1P5RAuthoritiesStrictDecode(t *testing.T) {
+	var protocol Protocol
+	if err := prospective.ReadStrict("../../authority/pr4b0_r1p5r_reacquisition_protocol.json", &protocol); err != nil {
+		t.Fatal(err)
+	}
+	var identity SourceIdentity
+	if err := prospective.ReadStrict("../../authority/pr4b0_r1p5r_source_identity.json", &identity); err != nil {
+		t.Fatal(err)
+	}
+	var registry AbandonedEvidenceRegistry
+	if err := prospective.ReadStrict("../../authority/pr4b0_r1p5r_abandoned_evidence_registry.json", &registry); err != nil {
+		t.Fatal(err)
+	}
+	if protocol.RepairSourceCommit != identity.RepairSourceCommit || protocol.ProtocolHash != identity.ProtocolHash || protocol.AbandonedRegistryHash != identity.AbandonedRegistryHash || identity.AbandonedRegistryHash != registry.RegistryHash {
+		t.Fatal("R1P5R authority bindings diverged")
+	}
+}
