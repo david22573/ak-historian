@@ -1,0 +1,12 @@
+# Progress
+- Initialized planning files.
+- Added `audit-workdir` command.
+- Added `plan-storage` command.
+- Added `local_source_manifest.go` structure.
+- Added `cleanup-workdir` command.
+- Added `verify-archive` command.
+- Wrote `phase10_5e_thin_node_runbook.md` + `.json`.
+- Wrote `phase10_5e_storage_integration_notes.md` + `.json`.
+- Added tests for `ak-historian` and fixed them.
+- Ran tests (ak-historian passed, ak-engine failed due to known pre-existing missing report artifacts).
+- Triggered smoke validation.

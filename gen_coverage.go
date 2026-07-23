@@ -60,12 +60,12 @@ func main() {
 			fmt.Println("No JSON found for", sym)
 			continue
 		}
-		
+
 		endIndex := strings.LastIndex(output, "}")
 		if endIndex == -1 {
 			continue
 		}
-		
+
 		jsonStr := output[startIndex : endIndex+1]
 
 		var r VerifyReport
@@ -86,9 +86,9 @@ func main() {
 			LastOpenTime:       r.LastOpenTime,
 			FirstGap:           r.FirstGap,
 			LastGap:            r.LastGap,
-			Usable2024         : usable,
-			Usable2025         : usable,
-			UsableFull20242025 : usable,
+			Usable2024:         usable,
+			Usable2025:         usable,
+			UsableFull20242025: usable,
 		}
 		reports = append(reports, fr)
 	}

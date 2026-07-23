@@ -3,8 +3,8 @@ package datasets
 import (
 	"testing"
 
-	"github.com/davidmiguel22573/ak-historian/internal/datasets/derivatives"
-	"github.com/davidmiguel22573/ak-historian/internal/datasets/sentiment"
+	"github.com/david22573/ak-historian/internal/datasets/derivatives"
+	"github.com/david22573/ak-historian/internal/datasets/sentiment"
 )
 
 func TestValidateSentimentRows_Duplicates(t *testing.T) {

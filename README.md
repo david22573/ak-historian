@@ -20,13 +20,13 @@ Bulk backfill tool for Binance historical data, coded in Go.
 
 ## Prerequisites
 
-- [Go](https://golang.org/doc/install) 1.22+
+- [Go](https://golang.org/doc/install) 1.25.6
 - [DuckDB CLI](https://duckdb.org/docs/installation/) (must be in PATH)
 
 ## Installation
 
 ```bash
-git clone https://github.com/davidmiguel22573/ak-historian
+git clone https://github.com/david22573/ak-historian
 cd ak-historian
 make build
 ```
@@ -81,6 +81,32 @@ R2_BUCKET_NAME=your-bucket-name
   --start 2024-01 \
   --end 2024-01 \
   --dry-run
+```
+
+### Generate Universe Manifest
+```bash
+./bin/ak-historian universe-manifest \
+  --universe-id explicit-research-v1 \
+  --policy EXPLICIT_SYMBOL_LIST \
+  --effective-start 2024-01-01T00:00:00Z \
+  --effective-end 2024-12-31T23:59:59Z \
+  --include-delisted unknown \
+  --symbols BTCUSDT,ETHUSDT \
+  --out universe_manifest.json
+```
+
+Explicit symbol lists are valid for exploratory research but carry survivorship risk warnings. See `UNIVERSE_MANIFESTS.md` for point-in-time requirements and LOW-risk rules.
+
+### Generate Dataset Manifest
+```bash
+./bin/ak-historian dataset-manifest \
+  --data-root path/to/dataset \
+  --dataset-id test_ds \
+  --dataset-role candles \
+  --source-type local-parquet \
+  --symbols BTCUSDT,ETHUSDT \
+  --universe-manifest universe_manifest.json \
+  --out dataset_manifest.json
 ```
 
 ## Options
@@ -143,6 +169,19 @@ Temporary files are stored in `workdir/`:
 `{workdir}/{market}/{interval}/{symbol}/{period}/{date}/`
 
 ## Development
+
+Standalone setup from a fresh clone:
+
+```bash
+git clone git@github.com:david22573/ak-historian.git
+cd ak-historian
+GOWORK=off go mod download
+make verify
+```
+
+The first dependency download needs network access unless the module cache is already populated. After dependencies are available, `make verify` runs local formatting, vet, test, and build checks with `GOWORK=off`.
+
+`go.work` is optional for local multi-repository development and is not required to build or test this repository. Cross-repository contracts are serialized artifacts such as dataset, universe, lifecycle, and point-in-time evidence manifests consumed by `ak-engine`; no sibling repository checkout is required.
 
 ### Running Tests
 ```bash

@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "snapshot_version": "1.0.0",
+  "snapshot_id": "binance_futures_um_20260707_211205_23080d6ad77d",
+  "exchange": "binance",
+  "market_type": "futures_um",
+  "quote_asset_filter": "USDT",
+  "source_type": "file_import_current",
+  "source_name": "binance_futures_exchangeInfo_v1",
+  "source_uri": "testdata/exchange/binance_futures_exchangeInfo_small.json",
+  "collected_at_utc": "2026-07-07T21:12:05Z",
+  "source_observed_time_utc": "2024-01-15T00:00:00Z",
+  "collector_git_sha": "UNKNOWN",
+  "raw_payload_sha256": "b6a1c3fa8486b9e1b4014a22ed6ceda11f74597412cd878262e8a9d627188c0f",
+  "normalized_payload_sha256": "14ea79484956037dcf66009ad7eb6b18773f1281417fa62c9392133091b18bd2",
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "base_asset": "BTC",
+      "quote_asset": "USDT",
+      "market_type": "futures_um",
+      "exchange": "binance",
+      "status": "TRADING",
+      "contract_type": "PERPETUAL",
+      "onboard_date_utc": "2024-01-01T00:00:00Z",
+      "delivery_date_utc": null,
+      "first_trade_date_utc": null,
+      "permissions": [
+        "COPY",
+        "DCA",
+        "GRID"
+      ],
+      "raw_status": "TRADING",
+      "source_fields": [
+        "baseAsset",
+        "contractType",
+        "onboardDate",
+        "permissions",
+        "quoteAsset",
+        "status",
+        "symbol"
+      ],
+      "warnings": [
+        {
+          "code": "EXCHANGE_META_DELIVERY_DATE_MISSING",
+          "target": "BTCUSDT",
+          "message": "Delivery/delisting date is missing"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "is_valid": true,
+    "status": "WARN",
+    "warning_codes": [
+      "EXCHANGE_META_CURRENT_ONLY_SOURCE",
+      "EXCHANGE_META_DELIVERY_DATE_MISSING"
+    ],
+    "symbol_count": 1,
+    "current_only": true
+  },
+  "warnings": [
+    {
+      "code": "EXCHANGE_META_CURRENT_ONLY_SOURCE",
+      "message": "Current-only exchange metadata snapshot does not prove historical availability before collected_at_utc"
+    },
+    {
+      "code": "EXCHANGE_META_DELIVERY_DATE_MISSING",
+      "target": "BTCUSDT",
+      "message": "Delivery/delisting date is missing"
+    }
+  ],
+  "hashes": {
+    "snapshot_hash": "23080d6ad77d30bb942be0dd1072e2a614f72815b8646255e74798ab0657038a",
+    "symbol_set_hash": "e9df828d46f80a9340e0464f7e878b5098d94d5f2cad2b0c962237065e4d7885",
+    "normalized_payload_hash": "14ea79484956037dcf66009ad7eb6b18773f1281417fa62c9392133091b18bd2"
+  }
+}

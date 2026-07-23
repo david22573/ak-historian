@@ -1,0 +1,56 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_version": "1.0.0",
+  "archive_id": "default_exchange_metadata_archive",
+  "exchange": "binance",
+  "market_type": "futures_um",
+  "effective_start_utc": "2026-07-07T21:12:05Z",
+  "effective_end_utc": "2026-07-07T21:12:05Z",
+  "snapshot_count": 1,
+  "snapshots": [
+    {
+      "snapshot_id": "binance_futures_um_20260707_211205_23080d6ad77d",
+      "collected_at_utc": "2026-07-07T21:12:05Z",
+      "source_name": "binance_futures_exchangeInfo_v1",
+      "snapshot_hash": "23080d6ad77d30bb942be0dd1072e2a614f72815b8646255e74798ab0657038a",
+      "symbol_count": 1,
+      "relative_path": "../snapshots/2026/07/07/exchange_metadata_snapshot_binance_futures_um_20260707_211205_23080d6ad77d.json"
+    }
+  ],
+  "symbol_lifecycle_evidence_summary": {
+    "BTCUSDT": {
+      "first_seen_utc": "2026-07-07T21:12:05Z",
+      "last_seen_utc": "2026-07-07T21:12:05Z",
+      "seen_in_snapshots": 1,
+      "statuses": [
+        "TRADING"
+      ],
+      "has_onboard_date": true,
+      "has_delivery_date": false,
+      "snapshot_hashes": [
+        "23080d6ad77d30bb942be0dd1072e2a614f72815b8646255e74798ab0657038a"
+      ]
+    }
+  },
+  "validation": {
+    "is_valid": true,
+    "status": "WARN",
+    "warning_codes": [
+      "EXCHANGE_META_CURRENT_ONLY_SOURCE"
+    ],
+    "symbol_count": 1,
+    "current_only": false
+  },
+  "warnings": [
+    {
+      "code": "EXCHANGE_META_CURRENT_ONLY_SOURCE",
+      "target": "binance_futures_um_20260707_211205_23080d6ad77d",
+      "message": "Archive contains a current-only exchange metadata snapshot"
+    }
+  ],
+  "hashes": {
+    "archive_hash": "a8022825e25c69d4536764f2f9c565d87ca11f645c9f3b5a16efbdb8cc67eb36",
+    "manifest_hash": "0a8b7bc4b1c2895d655253d127d746b565f6d4195281f29b73b85a6f0d47aebb",
+    "symbol_presence_hash": "8d1da122342a7ea1824a70f0f03dfc29e0a9de033a6c97bebfe942b4978596f3"
+  }
+}

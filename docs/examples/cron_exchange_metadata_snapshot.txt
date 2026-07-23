@@ -1,0 +1,11 @@
+# cron_exchange_metadata_snapshot.txt
+#
+# EXAMPLE ONLY. Do not activate automatically.
+# User must manually install.
+#
+# Recommended cadence: Daily
+# This script uses public metadata only and builds a durable archive over time.
+# The archive should be committed or backed up if desired.
+
+# Run every day at 00:05 UTC
+5 0 * * * cd /path/to/ak-historian && ./scripts/collect_exchange_metadata_snapshot.sh >> runs/logs/cron.log 2>&1

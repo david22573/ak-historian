@@ -13,7 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/smithy-go"
-	akconfig "github.com/davidmiguel22573/ak-historian/internal/config"
+	akconfig "github.com/david22573/ak-historian/internal/config"
 )
 
 type R2Client struct {

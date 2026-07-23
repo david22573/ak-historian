@@ -21,7 +21,7 @@ func TestWriteManifest_ZeroObjects(t *testing.T) {
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "manifest.json")
-	
+
 	err := WriteManifest(path, m)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -56,7 +56,7 @@ func TestWriteManifest_ValidObjects(t *testing.T) {
 
 	dir := t.TempDir()
 	path := filepath.Join(dir, "manifest.json")
-	
+
 	err := WriteManifest(path, m)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)

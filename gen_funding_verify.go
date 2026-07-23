@@ -22,15 +22,15 @@ type VerifyDatasetReport struct {
 }
 
 type FinalReport struct {
-	Symbol                   string `json:"symbol"`
-	RowCount                 int    `json:"row_count"`
-	CoverageStart            string `json:"coverage_start"`
-	CoverageEnd              string `json:"coverage_end"`
-	MissingIntervals         int    `json:"missing_intervals"`
-	DuplicateEventTimeCount  int    `json:"duplicate_event_time_count"`
-	AvailableAtValid         bool   `json:"available_at_valid"`
-	ManifestStatus           string `json:"manifest_status"`
-	VerificationStatus       string `json:"verification_status"`
+	Symbol                  string `json:"symbol"`
+	RowCount                int    `json:"row_count"`
+	CoverageStart           string `json:"coverage_start"`
+	CoverageEnd             string `json:"coverage_end"`
+	MissingIntervals        int    `json:"missing_intervals"`
+	DuplicateEventTimeCount int    `json:"duplicate_event_time_count"`
+	AvailableAtValid        bool   `json:"available_at_valid"`
+	ManifestStatus          string `json:"manifest_status"`
+	VerificationStatus      string `json:"verification_status"`
 }
 
 func main() {
@@ -72,15 +72,15 @@ func main() {
 		}
 
 		fr := FinalReport{
-			Symbol:                   sym,
-			RowCount:                 r.Report.TotalRows,
-			CoverageStart:            "2023-01-01",
-			CoverageEnd:              "2025-12-31",
-			MissingIntervals:         0, // Verify doesn't count them explicitly if it PASSes, but if we have 3288 it's exactly complete.
-			DuplicateEventTimeCount:  0,
-			AvailableAtValid:         status == "PASS",
-			ManifestStatus:           "PASS", // From fetch step
-			VerificationStatus:       status,
+			Symbol:                  sym,
+			RowCount:                r.Report.TotalRows,
+			CoverageStart:           "2023-01-01",
+			CoverageEnd:             "2025-12-31",
+			MissingIntervals:        0, // Verify doesn't count them explicitly if it PASSes, but if we have 3288 it's exactly complete.
+			DuplicateEventTimeCount: 0,
+			AvailableAtValid:        status == "PASS",
+			ManifestStatus:          "PASS", // From fetch step
+			VerificationStatus:      status,
 		}
 		reports = append(reports, fr)
 	}

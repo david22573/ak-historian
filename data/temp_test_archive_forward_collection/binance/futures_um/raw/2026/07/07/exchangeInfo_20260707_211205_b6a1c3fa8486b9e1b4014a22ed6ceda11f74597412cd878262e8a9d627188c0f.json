@@ -1,0 +1,19 @@
+{
+  "timezone": "UTC",
+  "serverTime": 1705276800000,
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "pair": "BTCUSDT",
+      "contractType": "PERPETUAL",
+      "deliveryDate": 0,
+      "onboardDate": 1704067200000,
+      "status": "TRADING",
+      "baseAsset": "BTC",
+      "quoteAsset": "USDT",
+      "marginAsset": "USDT",
+      "underlyingType": "COIN",
+      "permissions": ["GRID", "COPY", "DCA"]
+    }
+  ]
+}

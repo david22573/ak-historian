@@ -12,7 +12,7 @@ func TestNoAKTraderImport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("resolve repo root: %v", err)
 	}
-	forbiddenImport := "\"github.com/davidmiguel22573/" + ("ak" + "-trader")
+	forbiddenImport := "\"github.com/david22573/" + ("ak" + "-trader")
 	err = filepath.WalkDir(root, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err

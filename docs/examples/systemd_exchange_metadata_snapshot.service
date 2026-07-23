@@ -1,0 +1,22 @@
+# systemd_exchange_metadata_snapshot.service
+#
+# EXAMPLE ONLY. Do not activate automatically.
+# User must manually install.
+#
+# Recommended cadence: Daily
+# This script uses public metadata only and builds a durable archive over time.
+# The archive should be committed or backed up if desired.
+
+[Unit]
+Description=AK Universe Exchange Metadata Snapshot Collection
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/path/to/ak-historian
+ExecStart=/path/to/ak-historian/scripts/collect_exchange_metadata_snapshot.sh
+User=your_user
+
+[Install]
+WantedBy=multi-user.target

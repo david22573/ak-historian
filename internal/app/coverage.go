@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davidmiguel22573/ak-historian/internal/config"
-	"github.com/davidmiguel22573/ak-historian/internal/coverage"
-	"github.com/davidmiguel22573/ak-historian/internal/parquetutil"
-	"github.com/davidmiguel22573/ak-historian/internal/storage"
+	"github.com/david22573/ak-historian/internal/config"
+	"github.com/david22573/ak-historian/internal/coverage"
+	"github.com/david22573/ak-historian/internal/parquetutil"
+	"github.com/david22573/ak-historian/internal/storage"
 	"github.com/spf13/cobra"
 )
 

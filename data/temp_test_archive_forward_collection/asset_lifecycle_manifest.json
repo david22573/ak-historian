@@ -1,0 +1,106 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_version": "1.0.0",
+  "lifecycle_id": "default_lifecycle",
+  "lifecycle_name": "Default Asset Lifecycle",
+  "source_repo": "ak-historian",
+  "source_git_sha": "9fbaf29b7f49f605e0cb09475567ac486ea80834",
+  "source_type": "exchange_snapshot",
+  "generated_at_utc": "2026-07-07T21:12:05Z",
+  "exchange": "binance",
+  "market_type": "futures-um",
+  "quote_asset": "USDT",
+  "effective_start_utc": "UNKNOWN",
+  "effective_end_utc": "UNKNOWN",
+  "exchange_metadata_snapshot_manifest_hash": "0a8b7bc4b1c2895d655253d127d746b565f6d4195281f29b73b85a6f0d47aebb",
+  "exchange_metadata_snapshot_archive_hash": "a8022825e25c69d4536764f2f9c565d87ca11f645c9f3b5a16efbdb8cc67eb36",
+  "exchange_metadata_snapshot_coverage_start_utc": "2026-07-07T21:12:05Z",
+  "exchange_metadata_snapshot_coverage_end_utc": "2026-07-07T21:12:05Z",
+  "exchange_metadata_snapshot_evidence_level": "HISTORICAL_SNAPSHOT_EVIDENCE",
+  "exchange_metadata_snapshot_current_only": true,
+  "point_in_time_coverage_status": "CURRENT_ONLY",
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "base_asset": "BTC",
+      "quote_asset": "USDT",
+      "market_type": "futures_um",
+      "exchange": "binance",
+      "status": "ACTIVE",
+      "listed_at_utc": "2024-01-01T00:00:00Z",
+      "delisted_at_utc": "UNKNOWN",
+      "first_seen_utc": "2026-07-07T21:12:05Z",
+      "last_seen_utc": "2026-07-07T21:12:05Z",
+      "evidence_level": "HISTORICAL_SNAPSHOT_EVIDENCE",
+      "sources": [
+        {
+          "source_type": "exchange_snapshot_manifest",
+          "source_name": "binance_futures_exchangeInfo_v1",
+          "source_uri_or_path": "data/temp_test_archive_forward_collection/binance/futures_um/manifests/exchange_metadata_snapshot_manifest.json",
+          "source_hash": "23080d6ad77d30bb942be0dd1072e2a614f72815b8646255e74798ab0657038a",
+          "observed_at_utc": "2026-07-07T21:12:05Z",
+          "evidence_fields": [
+            "first_seen_utc",
+            "last_seen_utc",
+            "listed_at_utc",
+            "status"
+          ],
+          "confidence": "MEDIUM",
+          "notes": "Exchange metadata snapshot proves observation in this snapshot only; absence alone is not delisting proof."
+        }
+      ],
+      "warnings": [
+        {
+          "code": "LIFECYCLE_DELISTED_DATE_MISSING",
+          "target": "BTCUSDT",
+          "message": "Delisting date is unknown"
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "is_valid": true,
+    "status": "WARN",
+    "warning_codes": [
+      "LIFECYCLE_DELISTED_DATE_MISSING",
+      "LIFECYCLE_EXCHANGE_SNAPSHOT_CURRENT_ONLY",
+      "LIFECYCLE_EXCHANGE_SNAPSHOT_EVIDENCE",
+      "LIFECYCLE_LISTING_DATE_FROM_EXCHANGE_METADATA",
+      "LIFECYCLE_LOW_RISK_UNPROVEN"
+    ],
+    "listing_evidence_status": "VERIFIED",
+    "delisting_evidence_status": "MISSING",
+    "survivorship_support_status": "ELEVATED",
+    "lifecycle_evidence_supported": false
+  },
+  "warnings": [
+    {
+      "code": "LIFECYCLE_DELISTED_DATE_MISSING",
+      "target": "BTCUSDT",
+      "message": "Delisting date is unknown"
+    },
+    {
+      "code": "LIFECYCLE_EXCHANGE_SNAPSHOT_CURRENT_ONLY",
+      "target": "binance_futures_um_20260707_211205_23080d6ad77d",
+      "message": "Exchange metadata snapshot is current-only and does not prove historical availability before collection"
+    },
+    {
+      "code": "LIFECYCLE_EXCHANGE_SNAPSHOT_EVIDENCE",
+      "target": "binance_futures_um_20260707_211205_23080d6ad77d",
+      "message": "Asset lifecycle evidence includes exchange metadata snapshot observation"
+    },
+    {
+      "code": "LIFECYCLE_LISTING_DATE_FROM_EXCHANGE_METADATA",
+      "target": "BTCUSDT",
+      "message": "listed_at_utc came from explicit exchange metadata onboard date field"
+    },
+    {
+      "code": "LIFECYCLE_LOW_RISK_UNPROVEN",
+      "message": "Lifecycle evidence does not support LOW survivorship risk"
+    }
+  ],
+  "hashes": {
+    "lifecycle_hash": "94f95c3ce6077be6da80c5912363780086123d12f16903d5c4d9e38acd1399d4",
+    "manifest_hash": "714d1cc5165159203d6afd9aab7253ebcb7af26dde463b337f152a545dab1880"
+  }
+}

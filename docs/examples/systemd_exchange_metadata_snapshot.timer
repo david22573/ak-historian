@@ -1,0 +1,14 @@
+# systemd_exchange_metadata_snapshot.timer
+#
+# EXAMPLE ONLY. Do not activate automatically.
+# User must manually install.
+
+[Unit]
+Description=Run AK Universe Exchange Metadata Snapshot Collection Daily
+
+[Timer]
+OnCalendar=*-*-* 00:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

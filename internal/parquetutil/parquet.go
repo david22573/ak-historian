@@ -26,6 +26,10 @@ func ReadOpenTimes(paths []string) ([]int64, error) {
 		return readOpenTimesDuckDB(paths)
 	}
 
+	return ReadOpenTimesStrict(paths)
+}
+
+func ReadOpenTimesStrict(paths []string) ([]int64, error) {
 	openTimes := make([]int64, 0)
 	for _, path := range paths {
 		rows, err := readRows(path)

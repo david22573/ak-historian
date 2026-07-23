@@ -1,8 +1,6 @@
-module github.com/davidmiguel22573/ak-historian
+module github.com/david22573/ak-historian
 
-go 1.24
-
-toolchain go1.24.4
+go 1.25.6
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.41.9

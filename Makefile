@@ -1,4 +1,4 @@
-.PHONY: fmt test vet build run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
+.PHONY: fmt test vet build verify run-example preflight-backfill backfill-core backfill-expansion backfill-all prove-backfill
 
 fmt:
 	go fmt ./...
@@ -11,6 +11,9 @@ vet:
 
 build:
 	go build -o ./bin/ak-historian ./cmd/ak-historian
+
+verify:
+	./scripts/verify.sh
 
 run-example:
 	go run ./cmd/ak-historian fetch \

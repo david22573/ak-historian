@@ -1,0 +1,99 @@
+{
+  "schema_version": "1.0.0",
+  "manifest_version": "1.0.0",
+  "universe_id": "default_universe",
+  "universe_name": "Default Universe",
+  "source_repo": "ak-historian",
+  "source_git_sha": "unknown",
+  "source_type": "cli",
+  "generated_at_utc": "2026-07-07T21:12:05Z",
+  "effective_start_utc": "",
+  "effective_end_utc": "",
+  "quote_asset": "USDT",
+  "market_type": "futures-um",
+  "universe_policy": "UNKNOWN",
+  "includes_delisted_assets": "unknown",
+  "survivorship_bias_risk": "UNKNOWN",
+  "lifecycle_id": "default_lifecycle",
+  "lifecycle_hash": "94f95c3ce6077be6da80c5912363780086123d12f16903d5c4d9e38acd1399d4",
+  "lifecycle_manifest_hash": "714d1cc5165159203d6afd9aab7253ebcb7af26dde463b337f152a545dab1880",
+  "lifecycle_evidence_level_summary": {
+    "HISTORICAL_SNAPSHOT_EVIDENCE": 1
+  },
+  "lifecycle_source_type": "exchange_snapshot",
+  "lifecycle_warnings": [
+    "LIFECYCLE_DELISTED_DATE_MISSING",
+    "LIFECYCLE_EXCHANGE_SNAPSHOT_CURRENT_ONLY",
+    "LIFECYCLE_EXCHANGE_SNAPSHOT_EVIDENCE",
+    "LIFECYCLE_LISTING_DATE_FROM_EXCHANGE_METADATA",
+    "LIFECYCLE_LOW_RISK_UNPROVEN"
+  ],
+  "listing_evidence_status": "VERIFIED",
+  "delisting_evidence_status": "MISSING",
+  "survivorship_support_status": "ELEVATED",
+  "exchange_metadata_snapshot_manifest_hash": "0a8b7bc4b1c2895d655253d127d746b565f6d4195281f29b73b85a6f0d47aebb",
+  "exchange_metadata_snapshot_archive_hash": "a8022825e25c69d4536764f2f9c565d87ca11f645c9f3b5a16efbdb8cc67eb36",
+  "exchange_metadata_snapshot_coverage_start_utc": "2026-07-07T21:12:05Z",
+  "exchange_metadata_snapshot_coverage_end_utc": "2026-07-07T21:12:05Z",
+  "exchange_metadata_snapshot_evidence_level": "HISTORICAL_SNAPSHOT_EVIDENCE",
+  "exchange_metadata_snapshot_current_only": true,
+  "point_in_time_coverage_status": "CURRENT_ONLY",
+  "symbols": [
+    {
+      "symbol": "BTCUSDT",
+      "base_asset": "BTC",
+      "quote_asset": "USDT",
+      "market_type": "futures-um",
+      "first_seen_utc": "2026-07-07T21:12:05Z",
+      "listed_at_utc": "2024-01-01T00:00:00Z",
+      "delisted_at_utc": null,
+      "active_during_window": true,
+      "available_from_data": "2026-07-07T21:12:05Z",
+      "available_until_data": "2026-07-07T21:12:05Z",
+      "source": "asset_lifecycle_manifest",
+      "confidence": "HISTORICAL_SNAPSHOT_EVIDENCE"
+    }
+  ],
+  "validation": {
+    "is_valid": false
+  },
+  "warnings": [
+    {
+      "code": "UNIVERSE_DELISTED_STATUS_UNKNOWN",
+      "message": "Delisted asset inclusion is unknown"
+    },
+    {
+      "code": "UNIVERSE_DELISTING_EVIDENCE_MISSING",
+      "message": "Lifecycle manifest does not provide verified delisting evidence for all symbols"
+    },
+    {
+      "code": "UNIVERSE_DELISTING_EVIDENCE_MISSING",
+      "target": "BTCUSDT",
+      "message": "Symbol delisting date is unknown"
+    },
+    {
+      "code": "UNIVERSE_DELISTING_NOT_PROVEN_BY_SNAPSHOTS",
+      "message": "Exchange metadata snapshots do not prove delisting dates for all symbols"
+    },
+    {
+      "code": "UNIVERSE_LIFECYCLE_EVIDENCE_WEAK",
+      "message": "Lifecycle evidence is insufficient to lower survivorship risk"
+    },
+    {
+      "code": "UNIVERSE_POINT_IN_TIME_EVIDENCE_PARTIAL",
+      "message": "Exchange metadata snapshot evidence is current-only, not full point-in-time archive coverage"
+    },
+    {
+      "code": "UNIVERSE_POLICY_UNKNOWN",
+      "message": "Unknown universe policy: UNKNOWN"
+    },
+    {
+      "code": "UNIVERSE_SNAPSHOT_ARCHIVE_CURRENT_ONLY",
+      "message": "Exchange metadata snapshot evidence is current-only and does not prove historical universe membership"
+    }
+  ],
+  "hashes": {
+    "universe_hash": "c5c3a8f050641bff3785ea021d6d901042171b6933b207f7794d7648e454b81b",
+    "manifest_hash": "02ea0eec317d088aad6d2af1baf0350dae3a9dfca1d54289ecb4b34fcf362e2f"
+  }
+}

@@ -9,12 +9,12 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/davidmiguel22573/ak-historian/internal/binance"
-	"github.com/davidmiguel22573/ak-historian/internal/config"
-	"github.com/davidmiguel22573/ak-historian/internal/converter"
-	"github.com/davidmiguel22573/ak-historian/internal/storage"
-	"github.com/davidmiguel22573/ak-historian/internal/validate"
-	"github.com/davidmiguel22573/ak-historian/internal/workdir"
+	"github.com/david22573/ak-historian/internal/binance"
+	"github.com/david22573/ak-historian/internal/config"
+	"github.com/david22573/ak-historian/internal/converter"
+	"github.com/david22573/ak-historian/internal/storage"
+	"github.com/david22573/ak-historian/internal/validate"
+	"github.com/david22573/ak-historian/internal/workdir"
 	"github.com/spf13/cobra"
 )
 
@@ -142,6 +142,11 @@ var fetchCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(fetchCmd)
 
+	defaultConcurrency := 2
+	if os.Getenv("PREFIX") == "/data/data/com.termux/files/usr" || os.Getenv("CROS_USER_ID_HASH") != "" || os.Getenv("SOMMELIER_VERSION") != "" {
+		defaultConcurrency = 1
+	}
+
 	fetchCmd.Flags().StringVar(&market, "market", "futures-um", "market type (futures-um, futures-cm, spot)")
 	fetchCmd.Flags().StringVar(&symbols, "symbols", "BTCUSDT", "comma-separated list of symbols")
 	fetchCmd.Flags().StringVar(&interval, "interval", "1m", "kline interval")
@@ -149,7 +154,7 @@ func init() {
 	fetchCmd.Flags().StringVar(&start, "start", "", "start date (YYYY-MM or YYYY-MM-DD)")
 	fetchCmd.Flags().StringVar(&end, "end", "", "end date (YYYY-MM or YYYY-MM-DD)")
 	fetchCmd.Flags().StringVar(&workDirFlag, "workdir", ".ak-historian/work", "working directory")
-	fetchCmd.Flags().IntVar(&concurrency, "concurrency", 2, "number of concurrent downloads")
+	fetchCmd.Flags().IntVar(&concurrency, "concurrency", defaultConcurrency, "number of concurrent downloads")
 	fetchCmd.Flags().BoolVar(&force, "force", false, "force re-download and re-process")
 	fetchCmd.Flags().BoolVar(&dryRun, "dry-run", false, "dry run (only show what would be done)")
 	fetchCmd.Flags().BoolVar(&keep, "keep", false, "keep temporary files after processing")

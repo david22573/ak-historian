@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/davidmiguel22573/ak-historian/internal/datasets/derivatives"
+	"github.com/david22573/ak-historian/internal/datasets/derivatives"
 )
 
 type fakeDerivativesFetcher struct {
