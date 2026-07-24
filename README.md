@@ -20,13 +20,13 @@ Bulk backfill tool for Binance historical data, coded in Go.
 
 ## Prerequisites
 
-- [Go](https://golang.org/doc/install) 1.22+
+- [Go](https://golang.org/doc/install) 1.25.6
 - [DuckDB CLI](https://duckdb.org/docs/installation/) (must be in PATH)
 
 ## Installation
 
 ```bash
-git clone https://github.com/davidmiguel22573/ak-historian
+git clone https://github.com/david22573/ak-historian
 cd ak-historian
 make build
 ```
@@ -143,6 +143,19 @@ Temporary files are stored in `workdir/`:
 `{workdir}/{market}/{interval}/{symbol}/{period}/{date}/`
 
 ## Development
+
+Standalone setup from a fresh clone:
+
+```bash
+git clone git@github.com:david22573/ak-historian.git
+cd ak-historian
+GOWORK=off go mod download
+make verify
+```
+
+The first dependency download needs network access unless the module cache is already populated. After dependencies are available, `make verify` runs vet, test, and build checks with `GOWORK=off`.
+
+`go.work` is optional for local multi-repository development; no sibling repository checkout is required.
 
 ### Running Tests
 ```bash
