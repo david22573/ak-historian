@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Throttled execution environment for safe system resource usage
+export GOMAXPROCS=${GOMAXPROCS:-2}
+export GOGC=${GOGC:-50}
+
 echo "== AK-Historian Backfill Preflight =="
 
 if [[ ! -f "go.mod" ]]; then
@@ -55,8 +59,8 @@ echo "== make test =="
 make test
 
 echo
-echo "== go test -race ./... =="
-go test -race ./...
+echo "== go test -p 2 -race ./... =="
+go test -p 2 -race ./...
 
 echo
 echo "== make build =="
