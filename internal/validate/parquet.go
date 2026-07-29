@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
-	"strings"
 
+	"github.com/david22573/ak-historian/internal/duckdbquery"
 	"github.com/david22573/ak-historian/internal/parquetutil"
 )
 
@@ -44,19 +44,17 @@ func ValidateParquet(_ context.Context, parquetPath string) (ParquetStats, error
 }
 
 func validateParquetWithDuckDB(parquetPath string) (ParquetStats, error) {
-	path := strings.ReplaceAll(parquetPath, "'", "''")
 	query := fmt.Sprintf(`
 SELECT
     COUNT(*) AS row_count,
     CAST(MIN(open_time_ms) AS BIGINT) AS min_open_time_ms,
     CAST(MAX(open_time_ms) AS BIGINT) AS max_open_time_ms
-FROM read_parquet('%s');
-`, path)
+FROM read_parquet(%s);
+`, duckdbquery.QuoteString(parquetPath))
 
-	cmd := exec.Command("duckdb", "-json", "-c", query)
-	output, err := cmd.CombinedOutput()
+	output, err := duckdbquery.RunQuery(context.Background(), query, "-json")
 	if err != nil {
-		return ParquetStats{}, fmt.Errorf("duckdb validation failed: %w, output: %s", err, string(output))
+		return ParquetStats{}, fmt.Errorf("duckdb validation failed: %w", err)
 	}
 
 	var results []ParquetStats

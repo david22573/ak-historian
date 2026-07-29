@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 	"sync"
 
@@ -219,6 +220,10 @@ func RunFetch(ctx context.Context, opts FetchOptions) error {
 	}
 	opts.Symbols = validSymbols
 
+	if _, err := exec.LookPath("duckdb"); err != nil {
+		return fmt.Errorf("duckdb binary not found in PATH: %w (duckdb is required for CSV-to-Parquet conversion)", err)
+	}
+
 	cfg, err := config.LoadR2Config()
 	if err != nil {
 		return fmt.Errorf("config error: %w", err)
@@ -242,7 +247,7 @@ func runFetch(ctx context.Context, opts FetchOptions, r2 ObjectStore, downloader
 
 	summary := &Summary{}
 
-	jobs := make(chan FetchJob)
+	jobs := make(chan FetchJob, opts.Concurrency*4)
 	var wg sync.WaitGroup
 
 	// Start workers

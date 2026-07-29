@@ -3,8 +3,8 @@ package converter
 import (
 	"context"
 	"fmt"
-	"os/exec"
-	"strings"
+
+	"github.com/david22573/ak-historian/internal/duckdbquery"
 )
 
 type ConvertOptions struct {
@@ -18,23 +18,14 @@ type ConvertOptions struct {
 }
 
 func ConvertKlinesCSVToParquet(ctx context.Context, opts ConvertOptions) error {
-	// Simple SQL escaping by replacing single quotes with double single quotes
-	market := strings.ReplaceAll(opts.Market, "'", "''")
-	symbol := strings.ReplaceAll(opts.Symbol, "'", "''")
-	interval := strings.ReplaceAll(opts.Interval, "'", "''")
-	period := strings.ReplaceAll(opts.Period, "'", "''")
-	sourceDate := strings.ReplaceAll(opts.SourceDate, "'", "''")
-	csvPath := strings.ReplaceAll(opts.CSVPath, "'", "''")
-	parquetPath := strings.ReplaceAll(opts.ParquetPath, "'", "''")
-
 	query := fmt.Sprintf(`
 COPY (
     SELECT
-        '%s' AS market,
-        '%s' AS symbol,
-        '%s' AS interval,
-        '%s' AS period,
-        '%s' AS source_date,
+        %s AS market,
+        %s AS symbol,
+        %s AS interval,
+        %s AS period,
+        %s AS source_date,
         CAST(#1 AS BIGINT) AS open_time_ms,
         CAST(#2 AS DOUBLE) AS open,
         CAST(#3 AS DOUBLE) AS high,
@@ -46,16 +37,23 @@ COPY (
         CAST(#9 AS BIGINT) AS number_of_trades,
         CAST(#10 AS DOUBLE) AS taker_buy_base_volume,
         CAST(#11 AS DOUBLE) AS taker_buy_quote_volume
-    FROM read_csv_auto('%s', all_varchar=true)
+    FROM read_csv_auto(%s, all_varchar=true)
 )
-TO '%s'
+TO %s
 (FORMAT PARQUET, COMPRESSION ZSTD);
-`, market, symbol, interval, period, sourceDate, csvPath, parquetPath)
+`,
+		duckdbquery.QuoteString(opts.Market),
+		duckdbquery.QuoteString(opts.Symbol),
+		duckdbquery.QuoteString(opts.Interval),
+		duckdbquery.QuoteString(opts.Period),
+		duckdbquery.QuoteString(opts.SourceDate),
+		duckdbquery.QuoteString(opts.CSVPath),
+		duckdbquery.QuoteString(opts.ParquetPath),
+	)
 
-	cmd := exec.CommandContext(ctx, "duckdb", "-c", query)
-	output, err := cmd.CombinedOutput()
+	_, err := duckdbquery.RunQuery(ctx, query)
 	if err != nil {
-		return fmt.Errorf("duckdb conversion failed: %w, output: %s", err, string(output))
+		return fmt.Errorf("duckdb conversion failed: %w", err)
 	}
 
 	return nil

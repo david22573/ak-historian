@@ -1,12 +1,14 @@
 package parquetutil
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"os/exec"
 	"strconv"
 	"strings"
 
+	"github.com/david22573/ak-historian/internal/duckdbquery"
 	"github.com/xitongsys/parquet-go-source/local"
 	"github.com/xitongsys/parquet-go/reader"
 )
@@ -50,7 +52,7 @@ func readOpenTimesDuckDB(paths []string) ([]int64, error) {
 
 	quoted := make([]string, 0, len(paths))
 	for _, path := range paths {
-		quoted = append(quoted, "'"+strings.ReplaceAll(path, "'", "''")+"'")
+		quoted = append(quoted, duckdbquery.QuoteString(path))
 	}
 
 	query := fmt.Sprintf(
@@ -58,8 +60,7 @@ func readOpenTimesDuckDB(paths []string) ([]int64, error) {
 		strings.Join(quoted, ", "),
 	)
 
-	cmd := exec.Command("duckdb", "-c", query)
-	output, err := cmd.Output()
+	output, err := duckdbquery.RunQuery(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("duckdb read open times failed: %w", err)
 	}
