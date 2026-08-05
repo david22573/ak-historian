@@ -109,6 +109,33 @@ Explicit symbol lists are valid for exploratory research but carry survivorship 
   --out dataset_manifest.json
 ```
 
+### Generate strict Change 2 research identity evidence
+
+`research-identity-manifest` is a separate research-only companion to the legacy dataset manifest. It requires immutable dataset/archive/policy/PIT identifiers, hashes the exact regular parquet objects and raw archive/policy bytes, and rejects empty, partial, gapped, duplicate, out-of-order, late, future, or out-of-window evidence.
+
+```bash
+./bin/ak-historian research-identity-manifest \
+  --data-root evidence/dataset \
+  --evidence-root evidence \
+  --manifest-id manifest.btcusdt.2024-01 \
+  --manifest-version 1 \
+  --dataset-id binance.futures-um.btcusdt.1m.2024-01 \
+  --dataset-version 2024-01.v1 \
+  --source-archive-id binance.vision.btcusdt.1m.2024-01 \
+  --source-archive evidence/source/BTCUSDT-1m-2024-01.zip \
+  --instrument-universe-id universe.btcusdt \
+  --dataset-start 2024-01-01T00:00:00Z \
+  --dataset-end 2024-01-31T23:59:00Z \
+  --point-in-time-cutoff 2024-02-01T00:00:00Z \
+  --availability-policy evidence/policies/availability.json \
+  --coverage-policy evidence/policies/coverage.json \
+  --pit-evidence-id pit.btcusdt.2024-01 \
+  --pit-evidence-version 1 \
+  --out evidence/research_identity_manifest.json
+```
+
+The output uses explicitly temporary Change 2 hash encodings. It contains no candidate approval, lifecycle, paper-readiness, or authorization fields.
+
 ## Options
 
 ```text
