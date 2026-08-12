@@ -2,8 +2,8 @@ package exchange_meta
 
 const (
 	SchemaVersion   = "1.0.0"
-	SnapshotVersion = "1.0.0"
-	ManifestVersion = "1.0.0"
+	SnapshotVersion = "1.1.0"
+	ManifestVersion = "1.1.0"
 
 	StatusActive     = "ACTIVE"
 	StatusTrading    = "TRADING"

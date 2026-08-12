@@ -2,9 +2,9 @@ package datasets
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os/exec"
-	"strconv"
 	"strings"
 
 	"github.com/david22573/ak-historian/internal/datasets/derivatives"
@@ -94,6 +94,18 @@ func ValidateDerivativesRows(rows []derivatives.Row) error {
 		if r.AvailableAtMS < r.EventTimeMS {
 			return fmt.Errorf("row %d: available_at_ms < event_time_ms", i)
 		}
+		if r.IngestedAtMS <= 0 {
+			return fmt.Errorf("row %d: ingested_at_ms <= 0", i)
+		}
+		if r.AvailabilityPolicyID != derivatives.AvailabilityPolicyObservedIngestionID || r.AvailabilityPolicyVersion != derivatives.AvailabilityPolicyObservedIngestionVersion {
+			return fmt.Errorf("row %d: unsupported availability policy %q version %q", i, r.AvailabilityPolicyID, r.AvailabilityPolicyVersion)
+		}
+		if r.AvailableAtMS != r.IngestedAtMS {
+			return fmt.Errorf("row %d: observed-ingestion availability must equal ingested_at_ms", i)
+		}
+		if r.SourceVersion == "" {
+			return fmt.Errorf("row %d: missing source_version", i)
+		}
 		if seenEvents[r.EventTimeMS] {
 			return fmt.Errorf("row %d: duplicate event_time_ms %d", i, r.EventTimeMS)
 		}
@@ -108,6 +120,18 @@ func ValidateDerivativesRows(rows []derivatives.Row) error {
 	return nil
 }
 
+func ValidateDerivativesRowsFor(rows []derivatives.Row, expected derivatives.FetchRequest) error {
+	if err := ValidateDerivativesRows(rows); err != nil {
+		return err
+	}
+	for i, row := range rows {
+		if row.Source != expected.Source || row.Dataset != expected.Dataset || row.Market != expected.Market || row.Symbol != strings.ToUpper(expected.Symbol) || row.Interval != expected.Interval {
+			return fmt.Errorf("row %d: scope mismatch got %s/%s/%s/%s/%s want %s/%s/%s/%s/%s", i, row.Source, row.Dataset, row.Market, row.Symbol, row.Interval, expected.Source, expected.Dataset, expected.Market, strings.ToUpper(expected.Symbol), expected.Interval)
+		}
+	}
+	return nil
+}
+
 func ValidateDatasetParquet(ctx context.Context, path string) (RowStats, error) {
 	_, err := exec.LookPath("duckdb")
 	if err != nil {
@@ -116,36 +140,35 @@ func ValidateDatasetParquet(ctx context.Context, path string) (RowStats, error) 
 
 	escapedPath := strings.ReplaceAll(path, "'", "''")
 
-	query := fmt.Sprintf(`SELECT
-  COUNT(*) AS row_count,
-  CAST(MIN(event_time_ms) AS BIGINT) AS min_event_time_ms,
-  CAST(MAX(event_time_ms) AS BIGINT) AS max_event_time_ms,
-  CAST(MIN(available_at_ms) AS BIGINT) AS min_available_at_ms,
-  CAST(MAX(available_at_ms) AS BIGINT) AS max_available_at_ms
-FROM read_parquet('%s');`, escapedPath)
+	query := fmt.Sprintf(`SELECT source, dataset, market, symbol, interval, event_time_ms, available_at_ms, ingested_at_ms, value, extra_1, extra_2, source_version, availability_policy_id, availability_policy_version FROM read_parquet('%s');`, escapedPath)
 
-	cmd := exec.CommandContext(ctx, "duckdb", "-csv", "-noheader", "-c", query)
+	cmd := exec.CommandContext(ctx, "duckdb", "-json", "-c", query)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		return RowStats{}, fmt.Errorf("duckdb parquet validation failed: %s: %w", string(output), err)
 	}
 
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	if len(lines) == 0 {
-		return RowStats{}, fmt.Errorf("no output from duckdb")
+	var rows []derivatives.Row
+	if err := json.Unmarshal(output, &rows); err != nil {
+		return RowStats{}, fmt.Errorf("decode derivative parquet rows: %w", err)
 	}
-
-	fields := strings.Split(lines[0], ",")
-	if len(fields) != 5 {
-		return RowStats{}, fmt.Errorf("expected 5 fields, got %d", len(fields))
+	if err := ValidateDerivativesRows(rows); err != nil {
+		return RowStats{}, err
 	}
-
-	stats := RowStats{}
-	stats.RowCount, _ = strconv.ParseInt(fields[0], 10, 64)
-	stats.MinEventTimeMS, _ = strconv.ParseInt(fields[1], 10, 64)
-	stats.MaxEventTimeMS, _ = strconv.ParseInt(fields[2], 10, 64)
-	stats.MinAvailableAtMS, _ = strconv.ParseInt(fields[3], 10, 64)
-	stats.MaxAvailableAtMS, _ = strconv.ParseInt(fields[4], 10, 64)
-
+	stats := RowStats{RowCount: int64(len(rows))}
+	for i, row := range rows {
+		if i == 0 || row.EventTimeMS < stats.MinEventTimeMS {
+			stats.MinEventTimeMS = row.EventTimeMS
+		}
+		if i == 0 || row.EventTimeMS > stats.MaxEventTimeMS {
+			stats.MaxEventTimeMS = row.EventTimeMS
+		}
+		if i == 0 || row.AvailableAtMS < stats.MinAvailableAtMS {
+			stats.MinAvailableAtMS = row.AvailableAtMS
+		}
+		if i == 0 || row.AvailableAtMS > stats.MaxAvailableAtMS {
+			stats.MaxAvailableAtMS = row.AvailableAtMS
+		}
+	}
 	return stats, nil
 }

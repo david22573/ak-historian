@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/david22573/ak-historian/internal/exchange_meta"
@@ -107,6 +110,11 @@ func loadLifecycleManifest(path string) (*lifecycle.Manifest, error) {
 	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, err
 	}
+	claimed := m.Hashes
+	expected := lifecycle.ComputeHashes(&m)
+	if !reflect.DeepEqual(claimed, expected) {
+		return nil, fmt.Errorf("lifecycle manifest hash mismatch")
+	}
 	return &m, nil
 }
 
@@ -118,6 +126,11 @@ func loadUniverseManifest(path string) (*universe.Manifest, error) {
 	var m universe.Manifest
 	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, err
+	}
+	claimed := m.Hashes
+	expected := universe.ComputeHashes(&m)
+	if !reflect.DeepEqual(claimed, expected) {
+		return nil, fmt.Errorf("universe manifest hash mismatch")
 	}
 	return &m, nil
 }
@@ -131,17 +144,25 @@ func loadDatasetManifest(path string) (*manifest.DatasetManifest, error) {
 	if err := json.Unmarshal(data, &m); err != nil {
 		return nil, err
 	}
+	if m.Hashes.DatasetHash == "" || m.Hashes.ManifestHash == "" {
+		return nil, fmt.Errorf("dataset manifest identity is incomplete")
+	}
+	for _, file := range m.Files {
+		clean := filepath.ToSlash(filepath.Clean(filepath.FromSlash(file.RelativePath)))
+		if file.RelativePath == "" || filepath.IsAbs(file.RelativePath) || clean != file.RelativePath || clean == ".." || strings.HasPrefix(clean, "../") || file.SHA256 == "" {
+			return nil, fmt.Errorf("dataset manifest file identity is invalid")
+		}
+	}
+	want, err := m.ComputeHash()
+	if err != nil {
+		return nil, fmt.Errorf("compute dataset manifest hash: %w", err)
+	}
+	if want != m.Hashes.ManifestHash {
+		return nil, fmt.Errorf("dataset manifest hash mismatch")
+	}
 	return &m, nil
 }
 
 func loadSnapshotManifest(path string) (*exchange_meta.SnapshotManifest, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var m exchange_meta.SnapshotManifest
-	if err := json.Unmarshal(data, &m); err != nil {
-		return nil, err
-	}
-	return &m, nil
+	return exchange_meta.ReadSnapshotManifest(path)
 }

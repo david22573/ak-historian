@@ -95,15 +95,9 @@ var datasetManifestCmd = &cobra.Command{
 			if err := json.Unmarshal(reportData, &pitReport); err != nil {
 				return err
 			}
-			m.Survivorship.PointInTimeCoverageStatus = pitReport.OverallStatus
-			m.Survivorship.PointInTimeCoverageHash = pitReport.Hashes.CoverageHash
-			m.Survivorship.PointInTimePromotionRecommendation = pitReport.PromotionRecommendation
-			m.Survivorship.SurvivorshipBiasRisk = pitReport.SurvivorshipBiasRisk
-			for _, w := range pitReport.Warnings {
-				m.Survivorship.Warnings = append(m.Survivorship.Warnings, w.Reason)
+			if err := applyPITCoverageReport(m, &pitReport); err != nil {
+				return err
 			}
-			h, _ := m.ComputeHash()
-			m.Hashes.ManifestHash = h
 		}
 
 		b, err := json.MarshalIndent(m, "", "  ")
@@ -118,6 +112,28 @@ var datasetManifestCmd = &cobra.Command{
 		fmt.Printf("Successfully generated dataset manifest at %s\n", dmOut)
 		return nil
 	},
+}
+
+func applyPITCoverageReport(dataset *manifest.DatasetManifest, report *pitcoverage.Report) error {
+	if dataset == nil {
+		return fmt.Errorf("dataset manifest is nil")
+	}
+	if err := pitcoverage.ValidateReport(report); err != nil {
+		return fmt.Errorf("invalid PIT evidence coverage report: %w", err)
+	}
+	dataset.Survivorship.PointInTimeCoverageStatus = report.OverallStatus
+	dataset.Survivorship.PointInTimeCoverageHash = report.Hashes.CoverageHash
+	dataset.Survivorship.PointInTimePromotionRecommendation = report.PromotionRecommendation
+	dataset.Survivorship.SurvivorshipBiasRisk = report.SurvivorshipBiasRisk
+	for _, warning := range report.Warnings {
+		dataset.Survivorship.Warnings = append(dataset.Survivorship.Warnings, warning.Reason)
+	}
+	hash, err := dataset.ComputeHash()
+	if err != nil {
+		return fmt.Errorf("recompute dataset manifest hash: %w", err)
+	}
+	dataset.Hashes.ManifestHash = hash
+	return nil
 }
 
 func init() {

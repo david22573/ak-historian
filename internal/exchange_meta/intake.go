@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/david22573/ak-historian/internal/atomicfile"
 )
 
 type IntakeOptions struct {
@@ -301,10 +303,7 @@ func PerformBackfillIntake(opts IntakeOptions) (*IntakeReport, error) {
 			rawDir := filepath.Join(baseDir, "raw", year, month, day)
 			rawPath := filepath.Join(rawDir, rawFileName)
 
-			if err := os.MkdirAll(rawDir, 0755); err != nil {
-				return nil, fmt.Errorf("mkdir raw dir: %w", err)
-			}
-			if err := os.WriteFile(rawPath, data, 0644); err != nil {
+			if err := atomicfile.WriteFile(rawPath, data, 0644); err != nil {
 				return nil, fmt.Errorf("write raw payload: %w", err)
 			}
 		}

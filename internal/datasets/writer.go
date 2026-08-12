@@ -117,6 +117,7 @@ func WriteDerivativesRowsCSV(path string, rows []derivatives.Row) error {
 		"source", "dataset", "market", "symbol", "interval",
 		"event_time_ms", "available_at_ms", "ingested_at_ms",
 		"value", "extra_1", "extra_2", "source_version",
+		"availability_policy_id", "availability_policy_version",
 	}
 	if err := w.Write(header); err != nil {
 		return fmt.Errorf("write header: %w", err)
@@ -132,6 +133,8 @@ func WriteDerivativesRowsCSV(path string, rows []derivatives.Row) error {
 			strconv.FormatFloat(r.Extra1, 'f', -1, 64),
 			strconv.FormatFloat(r.Extra2, 'f', -1, 64),
 			r.SourceVersion,
+			r.AvailabilityPolicyID,
+			r.AvailabilityPolicyVersion,
 		}
 		if err := w.Write(record); err != nil {
 			return fmt.Errorf("write record: %w", err)

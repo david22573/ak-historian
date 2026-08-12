@@ -36,6 +36,7 @@ func ComputeSnapshotHashes(snapshot *Snapshot) Hashes {
 		"source_uri":                normalizeURIForHash(snapshot.SourceURI),
 		"collected_at_utc":          snapshot.CollectedAtUTC,
 		"source_observed_time_utc":  snapshot.SourceObservedTimeUTC,
+		"trust_level":               snapshot.TrustLevel,
 		"collector_git_sha":         snapshot.CollectorGitSHA,
 		"normalized_payload_sha256": normalizedPayloadHash,
 		"symbol_set_hash":           symbolSetHash,
@@ -54,6 +55,12 @@ func ComputeManifestHashes(manifest *SnapshotManifest) ManifestHashes {
 	sortManifest(manifest)
 	archiveHash := hashStable(manifest.Snapshots)
 	presenceHash := hashStable(manifest.SymbolLifecycleEvidenceSummary)
+	provenanceWarnings := append([]Warning{}, manifest.ProvenanceWarnings...)
+	provenanceWarnings = dedupeWarnings(provenanceWarnings)
+	trustLevels := make(map[string]int, len(manifest.TrustLevelSummary))
+	for level, count := range manifest.TrustLevelSummary {
+		trustLevels[level] = count
+	}
 	manifestOnly := map[string]interface{}{
 		"schema_version":                    manifest.SchemaVersion,
 		"manifest_version":                  manifest.ManifestVersion,
@@ -65,6 +72,14 @@ func ComputeManifestHashes(manifest *SnapshotManifest) ManifestHashes {
 		"snapshot_count":                    manifest.SnapshotCount,
 		"snapshots":                         manifest.Snapshots,
 		"symbol_lifecycle_evidence_summary": manifest.SymbolLifecycleEvidenceSummary,
+		"trust_level_summary":               trustLevels,
+		"earliest_observed_time_utc":        manifest.EarliestObservedTimeUTC,
+		"latest_observed_time_utc":          manifest.LatestObservedTimeUTC,
+		"source_count":                      manifest.SourceCount,
+		"official_source_count":             manifest.OfficialSourceCount,
+		"unverified_source_count":           manifest.UnverifiedSourceCount,
+		"observed_time_missing_count":       manifest.ObservedTimeMissingCount,
+		"provenance_warnings":               provenanceWarnings,
 		"validation":                        manifest.Validation,
 		"warnings":                          manifest.Warnings,
 		"archive_hash":                      archiveHash,

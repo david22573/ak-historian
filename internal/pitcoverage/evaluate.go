@@ -2,6 +2,7 @@ package pitcoverage
 
 import (
 	"strings"
+	"time"
 
 	"github.com/david22573/ak-historian/internal/exchange_meta"
 	"github.com/david22573/ak-historian/internal/lifecycle"
@@ -10,14 +11,10 @@ import (
 
 func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *universe.Manifest, sm *exchange_meta.SnapshotManifest) error {
 	overallStatus := StatusPitEligible
-	overallPromo := PromoAllowStrict
-	overallRisk := RiskLow
-
-	if um.SurvivorshipBiasRisk == RiskHigh {
-		overallRisk = RiskHigh
-	} else if um.SurvivorshipBiasRisk == RiskMedium {
-		overallRisk = RiskMedium
-	}
+	// The legacy PIT report remains useful for research diagnostics, but strict
+	// promotion is reserved for the canonical research-identity contract.
+	overallPromo := PromoExploratoryOnly
+	overallRisk := conservativePITRisk(um.SurvivorshipBiasRisk)
 
 	for _, uSym := range um.Symbols {
 		if !uSym.ActiveDuringWindow {
@@ -46,6 +43,7 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 			report.Validation.IsValid = false
 			overallStatus = StatusPitNotEligible
 			overallPromo = PromoBlockStrict
+			overallRisk = RiskHigh
 			continue
 		}
 
@@ -64,10 +62,10 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 
 		for _, src := range lSym.Sources {
 			symEntry.TrustLevelSummary[src.Confidence]++
-			if src.Confidence == exchange_meta.TrustLevelUserProvidedUnverified {
+			if !isTrustedPITSource(src.Confidence) {
 				symEntry.UnverifiedSnapshotCount++
 			}
-			if src.ObservedAtUTC != "" {
+			if isKnownPITTimestamp(src.ObservedAtUTC) {
 				symEntry.ObservedSnapshotCount++
 			} else {
 				symEntry.MissingObservedTimeCount++
@@ -76,7 +74,22 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 		}
 
 		// Evaluate point-in-time status for the symbol
-		if lSym.EvidenceLevel == lifecycle.EvidenceUnknown || lSym.EvidenceLevel == "" {
+		if lSym.EvidenceLevel == lifecycle.EvidenceUserProvidedUnverified {
+			symEntry.PointInTimeStatus = SymStatusUnverifiedOnly
+			symEntry.PromotionBlockingReasons = append(symEntry.PromotionBlockingReasons, "UNVERIFIED_EVIDENCE")
+			symEntry.Warnings = append(symEntry.Warnings, Warning{
+				Code:            CodeSymbolUnverifiedOnly,
+				Severity:        "ERROR",
+				Reason:          "Lifecycle evidence is user-provided or otherwise unverified",
+				TargetArtifact:  "lifecycle_manifest",
+				TargetSymbol:    lSym.Symbol,
+				BlocksPromotion: true,
+				RecommendedFix:  "Provide source-observed official exchange archive evidence",
+			})
+			overallStatus = StatusPitNotEligible
+			overallPromo = PromoBlockStrict
+			overallRisk = RiskHigh
+		} else if lSym.EvidenceLevel == lifecycle.EvidenceUnknown || lSym.EvidenceLevel == "" || len(lSym.Sources) == 0 {
 			symEntry.PointInTimeStatus = SymStatusMissingLifecycle
 			symEntry.PromotionBlockingReasons = append(symEntry.PromotionBlockingReasons, "EVIDENCE_MISSING")
 			symEntry.Warnings = append(symEntry.Warnings, Warning{
@@ -90,6 +103,7 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 			})
 			overallStatus = StatusPitNotEligible
 			overallPromo = PromoBlockStrict
+			overallRisk = RiskHigh
 		} else if lSym.EvidenceLevel == lifecycle.EvidenceLocalDataFirstSeen {
 			symEntry.PointInTimeStatus = SymStatusLocalDataOnly
 			symEntry.PromotionBlockingReasons = append(symEntry.PromotionBlockingReasons, "LOCAL_DATA_ONLY")
@@ -104,6 +118,7 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 			})
 			overallStatus = StatusPitNotEligible
 			overallPromo = PromoBlockStrict
+			overallRisk = RiskHigh
 		} else if lSym.EvidenceLevel == lifecycle.EvidenceCurrentActiveOnly {
 			symEntry.PointInTimeStatus = SymStatusCurrentOnly
 			symEntry.PromotionBlockingReasons = append(symEntry.PromotionBlockingReasons, "CURRENT_ONLY")
@@ -118,7 +133,8 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 			})
 			overallStatus = StatusPitNotEligible
 			overallPromo = PromoBlockStrict
-		} else if symEntry.UnverifiedSnapshotCount > 0 && !b.AllowUnverified {
+			overallRisk = RiskHigh
+		} else if symEntry.UnverifiedSnapshotCount > 0 {
 			symEntry.PointInTimeStatus = SymStatusUnverifiedOnly
 			symEntry.PromotionBlockingReasons = append(symEntry.PromotionBlockingReasons, "UNVERIFIED_EVIDENCE")
 			symEntry.Warnings = append(symEntry.Warnings, Warning{
@@ -128,56 +144,32 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 				TargetArtifact:  "lifecycle_manifest",
 				TargetSymbol:    lSym.Symbol,
 				BlocksPromotion: true,
-				RecommendedFix:  "Provide verified exchange metadata snapshot evidence or set --allow-unverified",
+				RecommendedFix:  "Provide source-observed official exchange archive evidence; compatibility flags do not authorize strict promotion",
 			})
 			overallStatus = StatusPitNotEligible
 			overallPromo = PromoBlockStrict
-		} else if symEntry.UnverifiedSnapshotCount > 0 && b.AllowUnverified {
-			symEntry.PointInTimeStatus = SymStatusUnverifiedOnly
-			symEntry.Warnings = append(symEntry.Warnings, Warning{
-				Code:            CodeSymbolUnverifiedOnly,
-				Severity:        "WARNING",
-				Reason:          "Evidence relies on unverified user backfill, strict promotion claims disabled",
-				TargetArtifact:  "lifecycle_manifest",
-				TargetSymbol:    lSym.Symbol,
-				BlocksPromotion: false,
-				RecommendedFix:  "Provide verified exchange metadata snapshot evidence",
-			})
-			if overallRisk == RiskLow {
-				overallRisk = RiskMedium // do not lower risk to LOW if unverified
-			}
-			if overallPromo == PromoAllowStrict {
-				overallPromo = PromoDowngrade
-			}
-			if overallStatus == StatusPitEligible {
-				overallStatus = StatusPitPartial
-			}
+			overallRisk = RiskHigh
 		} else if symEntry.MissingObservedTimeCount > 0 {
 			symEntry.PointInTimeStatus = SymStatusPartialForWindow
 			symEntry.Warnings = append(symEntry.Warnings, Warning{
 				Code:            CodeSymbolObservedTimeMissing,
-				Severity:        "WARNING",
+				Severity:        "ERROR",
 				Reason:          "Some snapshot evidence is missing observed time",
 				TargetArtifact:  "lifecycle_manifest",
 				TargetSymbol:    lSym.Symbol,
-				BlocksPromotion: false, // downgrades it
+				BlocksPromotion: true,
 				RecommendedFix:  "Provide snapshot evidence with known observed times",
 			})
-			if overallPromo == PromoAllowStrict {
-				overallPromo = PromoDowngrade
-			}
-			if overallStatus == StatusPitEligible {
-				overallStatus = StatusPitPartial
-			}
+			overallPromo = PromoBlockStrict
+			overallStatus = StatusPitNotEligible
+			overallRisk = RiskHigh
 		} else {
 			symEntry.PointInTimeStatus = SymStatusVerifiedForWindow
 		}
 
-		if lSym.DelistedAtUTC == "" && strings.Contains(um.UniversePolicy, "POINT_IN_TIME") {
+		if (lSym.DelistedAtUTC == "" || strings.EqualFold(lSym.DelistedAtUTC, StatusUnknown)) && strings.Contains(um.UniversePolicy, "POINT_IN_TIME") {
 			// Without delisting evidence, we keep survivorship risk elevated
-			if overallRisk == RiskLow {
-				overallRisk = RiskMedium
-			}
+			overallRisk = RiskHigh
 		}
 
 		report.Symbols = append(report.Symbols, symEntry)
@@ -205,6 +197,35 @@ func (b *Builder) evaluateCoverage(report *Report, lm *lifecycle.Manifest, um *u
 	report.Hashes.ReportHash = rh
 
 	return nil
+}
+
+func conservativePITRisk(value string) string {
+	switch strings.ToUpper(strings.TrimSpace(value)) {
+	case RiskLow:
+		return RiskLow
+	case RiskMedium:
+		return RiskMedium
+	default:
+		return RiskHigh
+	}
+}
+
+func isTrustedPITSource(confidence string) bool {
+	switch strings.ToUpper(strings.TrimSpace(confidence)) {
+	case exchange_meta.TrustLevelOfficialArchive, exchange_meta.TrustLevelExchangeRawResponseArchive:
+		return true
+	default:
+		return false
+	}
+}
+
+func isKnownPITTimestamp(value string) bool {
+	value = strings.TrimSpace(value)
+	if value == "" || strings.EqualFold(value, StatusUnknown) {
+		return false
+	}
+	_, err := time.Parse(time.RFC3339, value)
+	return err == nil
 }
 
 func findLifecycleSymbol(lm *lifecycle.Manifest, sym string) (lifecycle.SymbolEntry, bool) {

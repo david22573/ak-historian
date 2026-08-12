@@ -1,11 +1,96 @@
 package lifecycle
 
 import (
+	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/david22573/ak-historian/internal/exchange_meta"
 )
+
+func TestLifecyclePreservesUnverifiedTrustAndUnknownObservation(t *testing.T) {
+	dir := t.TempDir()
+	snapshot, err := exchange_meta.BuildSnapshot(exchange_meta.SnapshotOptions{
+		Exchange: "binance", MarketType: "futures_um", QuoteAssetFilter: "USDT",
+		SourceType: "file_import_historical", SourceName: "unverified_backfill", SourceURI: "backfill.json",
+		CollectedAtUTC: "2024-01-15T00:00:00Z", TrustLevel: exchange_meta.TrustLevelUserProvidedUnverified,
+		CollectorGitSHA: "test", RawPayload: []byte(`{"symbols":[` + lifecycleRawSymbol("BTCUSDT", "TRADING", 1704067200000, 0) + `]}`),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "snapshot.json")
+	if err := exchange_meta.WriteSnapshot(path, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := (&Builder{
+		SourceType: "exchange_snapshot", Exchange: "binance", MarketType: "futures_um", QuoteAsset: "USDT",
+		EffectiveStartUTC: "2024-01-01T00:00:00Z", EffectiveEndUTC: "2024-01-31T23:59:59Z", ExchangeSnapshotPath: path,
+	}).Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	sym := findLifecycleSymbol(t, manifest, "BTCUSDT")
+	if sym.EvidenceLevel != EvidenceUserProvidedUnverified || len(sym.Sources) != 1 || sym.Sources[0].Confidence != exchange_meta.TrustLevelUserProvidedUnverified || sym.Sources[0].ObservedAtUTC != StatusUnknown {
+		t.Fatalf("unverified trust or unknown observation was lost: %+v", sym)
+	}
+}
+
+func TestLifecycleSnapshotManifestRejectsEscapeAndReferenceTampering(t *testing.T) {
+	root := t.TempDir()
+	archiveRoot := filepath.Join(root, "archive")
+	snapshotDir := filepath.Join(archiveRoot, "snapshots")
+	manifestDir := filepath.Join(archiveRoot, "manifests")
+	if err := os.MkdirAll(snapshotDir, 0755); err != nil {
+		t.Fatal(err)
+	}
+	snapshot := lifecycleTestSnapshot(t, lifecycleRaw("BTCUSDT", "TRADING", 1704067200000, 0), "2024-01-15T00:00:00Z")
+	inside := filepath.Join(snapshotDir, "snapshot.json")
+	if err := exchange_meta.WriteSnapshot(inside, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	archive, err := exchange_meta.BuildSnapshotManifest(exchange_meta.ManifestOptions{
+		SnapshotDir: snapshotDir, BaseDir: manifestDir, ArchiveID: "test", Exchange: "binance", MarketType: "futures_um",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("path_escape", func(t *testing.T) {
+		outside := filepath.Join(root, "outside.json")
+		if err := exchange_meta.WriteSnapshot(outside, snapshot); err != nil {
+			t.Fatal(err)
+		}
+		copyManifest := *archive
+		copyManifest.Snapshots = append([]exchange_meta.ManifestSnapshotRef(nil), archive.Snapshots...)
+		copyManifest.Snapshots[0].RelativePath = "../../outside.json"
+		copyManifest.Hashes = exchange_meta.ComputeManifestHashes(&copyManifest)
+		path := filepath.Join(manifestDir, "escape.json")
+		if err := exchange_meta.WriteSnapshotManifest(path, &copyManifest); err != nil {
+			t.Fatal(err)
+		}
+		_, err := (&Builder{ExchangeSnapshotManifestPath: path}).Build()
+		if err == nil || !strings.Contains(err.Error(), "escapes archive root") {
+			t.Fatalf("contained-path violation was accepted: %v", err)
+		}
+	})
+
+	t.Run("reference_identity", func(t *testing.T) {
+		copyManifest := *archive
+		copyManifest.Snapshots = append([]exchange_meta.ManifestSnapshotRef(nil), archive.Snapshots...)
+		copyManifest.Snapshots[0].TrustLevel = exchange_meta.TrustLevelUserProvidedUnverified
+		copyManifest.Hashes = exchange_meta.ComputeManifestHashes(&copyManifest)
+		path := filepath.Join(manifestDir, "reference.json")
+		if err := exchange_meta.WriteSnapshotManifest(path, &copyManifest); err != nil {
+			t.Fatal(err)
+		}
+		_, err := (&Builder{ExchangeSnapshotManifestPath: path}).Build()
+		if err == nil || !strings.Contains(err.Error(), "reference identity mismatch") {
+			t.Fatalf("reference identity tampering was accepted: %v", err)
+		}
+	})
+}
 
 func TestLifecycleConsumesSingleExchangeSnapshot(t *testing.T) {
 	dir := t.TempDir()

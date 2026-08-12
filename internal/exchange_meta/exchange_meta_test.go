@@ -1,11 +1,114 @@
 package exchange_meta
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strconv"
 	"testing"
 )
+
+func TestSnapshotManifestHashSurvivesJSONRoundTrip(t *testing.T) {
+	dir := t.TempDir()
+	snapshot := buildTestSnapshot(t, `{"serverTime":1705276800000,"symbols":[`+
+		rawSymbol("BTCUSDT", "TRADING", 1704067200000, 0)+`,`+
+		rawSymbol("ETHUSDT", "TRADING", 1704067200000, 0)+`]}`, collectedAt)
+	snapshot.TrustLevel = TrustLevelOfficialArchive
+	snapshot.Hashes = ComputeSnapshotHashes(snapshot)
+	snapshot.SnapshotID = buildSnapshotID(snapshot)
+	if err := WriteSnapshot(filepath.Join(dir, "snapshot.json"), snapshot); err != nil {
+		t.Fatal(err)
+	}
+	second := buildTestSnapshot(t, rawExchangeInfo("ETHUSDT", "TRADING", 1704067200000, 0), "2024-01-16T00:00:00Z")
+	second.TrustLevel = TrustLevelOfficialArchive
+	second.Hashes = ComputeSnapshotHashes(second)
+	second.SnapshotID = buildSnapshotID(second)
+	if err := WriteSnapshot(filepath.Join(dir, "snapshot-2.json"), second); err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := BuildSnapshotManifest(ManifestOptions{SnapshotDir: dir, ArchiveID: "roundtrip", Exchange: "binance", MarketType: "futures_um"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(manifest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var decoded SnapshotManifest
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatal(err)
+	}
+	got := ComputeManifestHashes(&decoded)
+	if !reflect.DeepEqual(got, manifest.Hashes) {
+		t.Fatalf("manifest hash changed across JSON round trip\nmanifest=%#v\ndecoded=%#v\ngot=%+v want=%+v", manifest, decoded, got, manifest.Hashes)
+	}
+}
+
+func TestBuildSnapshotManifestRejectsOneCorruptExpectedSource(t *testing.T) {
+	dir := t.TempDir()
+	first := buildTestSnapshot(t, rawExchangeInfo("BTCUSDT", "TRADING", 1704067200000, 0), collectedAt)
+	if err := WriteSnapshot(filepath.Join(dir, "valid.json"), first); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "corrupt.json"), []byte(`{"truncated":`), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := BuildSnapshotManifest(ManifestOptions{SnapshotDir: dir, Exchange: "binance", MarketType: "futures_um"}); err == nil {
+		t.Fatal("BuildSnapshotManifest() error=nil, want one-of-N corrupt source rejection")
+	}
+}
+
+func TestSnapshotAndManifestReadersRejectDeclaredIdentityTampering(t *testing.T) {
+	dir := t.TempDir()
+	snapshot := buildTestSnapshot(t, rawExchangeInfo("BTCUSDT", "TRADING", 1704067200000, 0), collectedAt)
+	snapshot.TrustLevel = TrustLevelOfficialArchive
+	snapshot.Hashes = ComputeSnapshotHashes(snapshot)
+	snapshot.SnapshotID = buildSnapshotID(snapshot)
+	snapshotPath := filepath.Join(dir, "snapshot.json")
+	if err := WriteSnapshot(snapshotPath, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadSnapshot(snapshotPath); err != nil {
+		t.Fatalf("valid snapshot rejected: %v", err)
+	}
+
+	snapshot.TrustLevel = TrustLevelUserProvidedUnverified
+	if err := WriteSnapshot(snapshotPath, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadSnapshot(snapshotPath); err == nil {
+		t.Fatal("trust-level tampering with stale hash was accepted")
+	}
+
+	snapshot.Hashes = ComputeSnapshotHashes(snapshot)
+	if err := WriteSnapshot(snapshotPath, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadSnapshot(snapshotPath); err == nil {
+		t.Fatal("rehashed snapshot with stale id was accepted")
+	}
+	snapshot.SnapshotID = buildSnapshotID(snapshot)
+	if err := WriteSnapshot(snapshotPath, snapshot); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadSnapshot(snapshotPath); err != nil {
+		t.Fatalf("self-consistent unverified snapshot should remain readable for fail-closed evaluation: %v", err)
+	}
+
+	manifest, err := BuildSnapshotManifest(ManifestOptions{SnapshotDir: dir, ArchiveID: "tamper", Exchange: "binance", MarketType: "futures_um"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifestPath := filepath.Join(dir, "manifest.json")
+	manifest.UnverifiedSourceCount++
+	if err := WriteSnapshotManifest(manifestPath, manifest); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ReadSnapshotManifest(manifestPath); err == nil {
+		t.Fatal("manifest provenance tampering with stale hash was accepted")
+	}
+}
 
 const collectedAt = "2024-01-15T00:00:00Z"
 

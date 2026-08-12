@@ -2,12 +2,14 @@ package researchidentity
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/david22573/ak-historian/internal/atomicfile"
 	"github.com/david22573/ak-historian/internal/canonicalcontract"
 	"github.com/david22573/ak-historian/internal/parquetutil"
 )
@@ -178,7 +180,7 @@ func WriteManifest(path string, manifest Manifest) error {
 	if _, err := canonicalcontract.ValidateArtifact(data, true); err != nil {
 		return fmt.Errorf("self-validate research identity manifest: %w", err)
 	}
-	if err := os.WriteFile(path, data, 0644); err != nil {
+	if err := atomicfile.WriteFile(path, data, 0644); err != nil {
 		return fmt.Errorf("write research identity manifest: %w", err)
 	}
 	return nil
@@ -284,7 +286,9 @@ func buildObjectInventory(root string, start, end time.Time, delayMS int64) ([]D
 		if symbol == "" || interval == "" {
 			return nil, nil, nil, fmt.Errorf("cannot infer symbol/interval from %s", relative)
 		}
-		times, err := parquetutil.ReadOpenTimesStrict([]string{path})
+		times, hash, size, err := readConsistentParquetObject(path, func(snapshotPath string) ([]int64, error) {
+			return parquetutil.ReadOpenTimesStrict([]string{snapshotPath})
+		})
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -303,10 +307,6 @@ func buildObjectInventory(root string, start, end time.Time, delayMS int64) ([]D
 		}
 		if len(windowTimes) != len(times) {
 			return nil, nil, nil, fmt.Errorf("dataset object contains rows outside requested window: %s", relative)
-		}
-		hash, size, err := hashFile(path, "dataset_object")
-		if err != nil {
-			return nil, nil, nil, err
 		}
 		objects = append(objects, DatasetObjectIdentity{
 			RelativePath:       relative,
@@ -348,6 +348,54 @@ func buildObjectInventory(root string, start, end time.Time, delayMS int64) ([]D
 	}
 	sort.Strings(symbols)
 	return objects, series, symbols, nil
+}
+
+func readConsistentParquetObject(path string, readTimes func(string) ([]int64, error)) ([]int64, string, int64, error) {
+	beforeHash, beforeSize, err := hashFile(path, "dataset_object")
+	if err != nil {
+		return nil, "", 0, err
+	}
+	source, err := os.Open(path)
+	if err != nil {
+		return nil, "", 0, err
+	}
+	defer source.Close()
+	snapshot, err := os.CreateTemp("", "ak-historian-identity-*.parquet")
+	if err != nil {
+		return nil, "", 0, err
+	}
+	snapshotPath := snapshot.Name()
+	defer os.Remove(snapshotPath)
+	if _, err := io.Copy(snapshot, source); err != nil {
+		snapshot.Close()
+		return nil, "", 0, err
+	}
+	if err := snapshot.Sync(); err != nil {
+		snapshot.Close()
+		return nil, "", 0, err
+	}
+	if err := snapshot.Close(); err != nil {
+		return nil, "", 0, err
+	}
+	snapshotHash, snapshotSize, err := hashFile(snapshotPath, "dataset_object")
+	if err != nil {
+		return nil, "", 0, err
+	}
+	if snapshotHash != beforeHash || snapshotSize != beforeSize {
+		return nil, "", 0, fmt.Errorf("dataset object changed while snapshotting identity input: %s", path)
+	}
+	times, err := readTimes(snapshotPath)
+	if err != nil {
+		return nil, "", 0, err
+	}
+	afterHash, afterSize, err := hashFile(path, "dataset_object")
+	if err != nil {
+		return nil, "", 0, err
+	}
+	if snapshotHash != afterHash || snapshotSize != afterSize {
+		return nil, "", 0, fmt.Errorf("dataset object changed during identity construction: %s", path)
+	}
+	return times, snapshotHash, snapshotSize, nil
 }
 
 func validateStrictCoverage(series []timestampSeries, start, end, cutoff time.Time, delayMS, intervalMS int64) (CoverageEvidence, time.Time, time.Time, error) {

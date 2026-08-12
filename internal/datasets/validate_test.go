@@ -98,3 +98,35 @@ func TestValidateDerivativesRowsRejectsAvailableBeforeEvent(t *testing.T) {
 		t.Fatalf("expected available_at_ms < event_time_ms error, got %v", err)
 	}
 }
+
+func TestValidateDerivativesRowsRequiresCanonicalAvailabilityPolicy(t *testing.T) {
+	row := validDerivativeRow()
+	row.AvailabilityPolicyID = ""
+	if err := ValidateDerivativesRows([]derivatives.Row{row}); err == nil {
+		t.Fatal("missing availability policy was accepted")
+	}
+	row = validDerivativeRow()
+	row.AvailableAtMS--
+	if err := ValidateDerivativesRows([]derivatives.Row{row}); err == nil {
+		t.Fatal("backdated observed-ingestion availability was accepted")
+	}
+}
+
+func TestValidateDerivativesRowsForRejectsWrongScope(t *testing.T) {
+	row := validDerivativeRow()
+	row.Symbol = "ETHUSDT"
+	expected := derivatives.FetchRequest{Source: "binance", Dataset: "funding_rate", Market: "futures-um", Symbol: "LINKUSDT", Interval: "8h"}
+	if err := ValidateDerivativesRowsFor([]derivatives.Row{row}, expected); err == nil {
+		t.Fatal("wrong symbol was accepted")
+	}
+}
+
+func validDerivativeRow() derivatives.Row {
+	return derivatives.Row{
+		Source: "binance", Dataset: "funding_rate", Market: "futures-um", Symbol: "LINKUSDT", Interval: "8h",
+		EventTimeMS: 1000, AvailableAtMS: 2000, IngestedAtMS: 2000, Value: 0.001,
+		SourceVersion:             derivatives.SourceVersionBinanceFundingRate,
+		AvailabilityPolicyID:      derivatives.AvailabilityPolicyObservedIngestionID,
+		AvailabilityPolicyVersion: derivatives.AvailabilityPolicyObservedIngestionVersion,
+	}
+}

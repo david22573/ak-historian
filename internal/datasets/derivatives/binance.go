@@ -13,16 +13,18 @@ import (
 )
 
 const (
-	DatasetFundingRate               = "funding_rate"
-	DatasetOpenInterest              = "open_interest"
-	DatasetLongShortRatio            = "long_short_ratio"
-	DatasetTopTraderLongShortRatio   = "top_trader_long_short_ratio"
-	DatasetTakerBuySellVolume        = "taker_buy_sell_volume"
-	SourceVersionBinanceFundingRate  = "binance_usdm:/fapi/v1/fundingRate"
-	SourceVersionBinanceOpenInterest = "binance_usdm:/futures/data/openInterestHist"
-	SourceVersionBinanceLongShort    = "binance_usdm:/futures/data/globalLongShortAccountRatio"
-	SourceVersionBinanceTopTrader    = "binance_usdm:/futures/data/topLongShortPositionRatio"
-	SourceVersionBinanceTaker        = "binance_usdm:/futures/data/takerlongshortRatio"
+	DatasetFundingRate                         = "funding_rate"
+	DatasetOpenInterest                        = "open_interest"
+	DatasetLongShortRatio                      = "long_short_ratio"
+	DatasetTopTraderLongShortRatio             = "top_trader_long_short_ratio"
+	DatasetTakerBuySellVolume                  = "taker_buy_sell_volume"
+	SourceVersionBinanceFundingRate            = "binance_usdm:/fapi/v1/fundingRate"
+	SourceVersionBinanceOpenInterest           = "binance_usdm:/futures/data/openInterestHist"
+	SourceVersionBinanceLongShort              = "binance_usdm:/futures/data/globalLongShortAccountRatio"
+	SourceVersionBinanceTopTrader              = "binance_usdm:/futures/data/topLongShortPositionRatio"
+	SourceVersionBinanceTaker                  = "binance_usdm:/futures/data/takerlongshortRatio"
+	AvailabilityPolicyObservedIngestionID      = "ak.historian.derivatives.observed_ingestion"
+	AvailabilityPolicyObservedIngestionVersion = "1"
 )
 
 type FetchRequest struct {
@@ -132,6 +134,7 @@ func (c *BinanceClient) fetchFundingRates(ctx context.Context, req FetchRequest)
 		if err := c.getJSON(ctx, "/fapi/v1/fundingRate", values, &records); err != nil {
 			return nil, err
 		}
+		observedAtMS := c.observedAtMS()
 		if len(records) == 0 {
 			break
 		}
@@ -146,17 +149,19 @@ func (c *BinanceClient) fetchFundingRates(ctx context.Context, req FetchRequest)
 			}
 			mark, _ := strconv.ParseFloat(rec.MarkPrice, 64)
 			rows = append(rows, Row{
-				Source:        "binance",
-				Dataset:       req.Dataset,
-				Market:        req.Market,
-				Symbol:        strings.ToUpper(req.Symbol),
-				Interval:      req.Interval,
-				EventTimeMS:   eventMS,
-				AvailableAtMS: eventMS,
-				IngestedAtMS:  time.Now().UTC().UnixMilli(),
-				Value:         value,
-				Extra1:        mark,
-				SourceVersion: SourceVersionBinanceFundingRate,
+				Source:                    "binance",
+				Dataset:                   req.Dataset,
+				Market:                    req.Market,
+				Symbol:                    strings.ToUpper(req.Symbol),
+				Interval:                  req.Interval,
+				EventTimeMS:               eventMS,
+				AvailableAtMS:             observedAtMS,
+				IngestedAtMS:              observedAtMS,
+				Value:                     value,
+				Extra1:                    mark,
+				SourceVersion:             SourceVersionBinanceFundingRate,
+				AvailabilityPolicyID:      AvailabilityPolicyObservedIngestionID,
+				AvailabilityPolicyVersion: AvailabilityPolicyObservedIngestionVersion,
 			})
 		}
 		last := records[len(records)-1].FundingTime
@@ -184,19 +189,19 @@ func (c *BinanceClient) fetchLimitedStats(ctx context.Context, req FetchRequest)
 		if err := c.getJSON(ctx, path, values, &records); err != nil {
 			return nil, err
 		}
+		observedAtMS := c.observedAtMS()
 		if len(records) == 0 {
 			break
 		}
 		last := int64(0)
 		for _, rec := range records {
-			row, err := rec.toRow(req, sourceVersion)
+			row, err := rec.toRow(req, sourceVersion, observedAtMS)
 			if err != nil {
 				return nil, err
 			}
 			if row.EventTimeMS < req.Start.UTC().UnixMilli() || row.EventTimeMS > endMS {
 				continue
 			}
-			row.IngestedAtMS = time.Now().UTC().UnixMilli()
 			rows = append(rows, row)
 			last = row.EventTimeMS
 		}
@@ -206,6 +211,14 @@ func (c *BinanceClient) fetchLimitedStats(ctx context.Context, req FetchRequest)
 		startMS = last + 1
 	}
 	return rows, nil
+}
+
+func (c *BinanceClient) observedAtMS() int64 {
+	nowFn := c.Now
+	if nowFn == nil {
+		nowFn = time.Now
+	}
+	return nowFn().UTC().UnixMilli()
 }
 
 func limitedDatasetEndpoint(dataset string) (string, string) {
@@ -275,20 +288,23 @@ type limitedStatsRecord struct {
 	Timestamp            json.RawMessage `json:"timestamp"`
 }
 
-func (r limitedStatsRecord) toRow(req FetchRequest, sourceVersion string) (Row, error) {
+func (r limitedStatsRecord) toRow(req FetchRequest, sourceVersion string, observedAtMS int64) (Row, error) {
 	eventMS, err := rawInt64(r.Timestamp)
 	if err != nil {
 		return Row{}, err
 	}
 	row := Row{
-		Source:        "binance",
-		Dataset:       req.Dataset,
-		Market:        req.Market,
-		Symbol:        strings.ToUpper(req.Symbol),
-		Interval:      req.Interval,
-		EventTimeMS:   eventMS,
-		AvailableAtMS: eventMS,
-		SourceVersion: sourceVersion,
+		Source:                    "binance",
+		Dataset:                   req.Dataset,
+		Market:                    req.Market,
+		Symbol:                    strings.ToUpper(req.Symbol),
+		Interval:                  req.Interval,
+		EventTimeMS:               eventMS,
+		AvailableAtMS:             observedAtMS,
+		IngestedAtMS:              observedAtMS,
+		SourceVersion:             sourceVersion,
+		AvailabilityPolicyID:      AvailabilityPolicyObservedIngestionID,
+		AvailabilityPolicyVersion: AvailabilityPolicyObservedIngestionVersion,
 	}
 	switch req.Dataset {
 	case DatasetOpenInterest:

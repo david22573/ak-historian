@@ -104,6 +104,29 @@ func TestRowsOutsideDeclaredDatasetWindowFailClosed(t *testing.T) {
 	}
 }
 
+func TestParquetReplacementDuringIdentityConstructionFailsClosed(t *testing.T) {
+	_, path := identityFixture(t, nil)
+	replacement := filepath.Join(t.TempDir(), "replacement.parquet")
+	writeParquetTimes(t, replacement, []int64{1, 2, 3})
+	_, _, _, err := readConsistentParquetObject(path, func(snapshotPath string) ([]int64, error) {
+		times, err := parquetutil.ReadOpenTimesStrict([]string{snapshotPath})
+		if err != nil {
+			return nil, err
+		}
+		bytes, err := os.ReadFile(replacement)
+		if err != nil {
+			return nil, err
+		}
+		if err := os.WriteFile(path, bytes, 0644); err != nil {
+			return nil, err
+		}
+		return times, nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "changed during identity construction") {
+		t.Fatalf("concurrent replacement was not rejected: %v", err)
+	}
+}
+
 func TestMissingArchiveAndUnsafeDatasetPathFail(t *testing.T) {
 	opts, dataFile := identityFixture(t, nil)
 	opts.SourceArchivePath = filepath.Join(opts.EvidenceRoot, "missing.zip")

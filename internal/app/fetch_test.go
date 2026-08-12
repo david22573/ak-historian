@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/david22573/ak-historian/internal/binance"
@@ -11,6 +12,36 @@ import (
 type fakeObjectStore struct {
 	exists func(string) (bool, error)
 	upload func(string, string) error
+}
+
+func TestProcessItemMissingRequiredChecksumCannotUpload(t *testing.T) {
+	uploaded := false
+	store := &fakeObjectStore{upload: func(string, string) error { uploaded = true; return nil }}
+	downloader := &fakeDownloader{
+		download: func(string) (binance.DownloadStatus, error) { return binance.Downloaded, nil },
+		checksum: func(string) (string, error) { return "", binance.ErrChecksumNotFound },
+	}
+	opts := FetchOptions{Market: "spot", Interval: "1m", Period: "daily", WorkDir: t.TempDir(), Verify: true}
+	err := processItem(context.Background(), opts, "BTCUSDT", "2024-01-01", downloader, store, &Summary{})
+	if err == nil || !strings.Contains(err.Error(), "required checksum missing") {
+		t.Fatalf("missing checksum was not rejected: %v", err)
+	}
+	if uploaded {
+		t.Fatal("object uploaded without required checksum")
+	}
+}
+
+func TestProcessItemCannotSkipExistingWithoutVerification(t *testing.T) {
+	store := &fakeObjectStore{exists: func(string) (bool, error) { return true, nil }}
+	opts := FetchOptions{Market: "spot", Interval: "1m", Period: "daily", WorkDir: t.TempDir(), Verify: false}
+	summary := &Summary{}
+	err := processItem(context.Background(), opts, "BTCUSDT", "2024-01-01", &fakeDownloader{}, store, summary)
+	if err == nil || !strings.Contains(err.Error(), "checksum verification is required") {
+		t.Fatalf("unverified existing object was skipped: %v", err)
+	}
+	if summary.Snapshot().SkippedExisting != 0 {
+		t.Fatal("unverified object counted as a successful skip")
+	}
 }
 
 func (f *fakeObjectStore) ObjectExists(ctx context.Context, key string) (bool, error) {

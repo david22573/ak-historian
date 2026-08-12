@@ -316,6 +316,9 @@ func processItem(
 	r2 ObjectStore,
 	summary *Summary,
 ) error {
+	if !opts.DryRun && !opts.Verify {
+		return fmt.Errorf("checksum verification is required before publish or existing-object skip")
+	}
 	spec := binance.ArchiveSpec{
 		Market:   opts.Market,
 		Symbol:   symbol,
@@ -337,18 +340,6 @@ func processItem(
 	paths, err := workdir.BuildPaths(opts.WorkDir, spec)
 	if err != nil {
 		return err
-	}
-
-	if !opts.Force && !opts.DryRun {
-		exists, err := r2.ObjectExists(ctx, objectKey)
-		if err != nil {
-			return err
-		}
-		if exists {
-			log.Printf("Skip existing: %s %s", symbol, date)
-			summary.IncSkippedExisting()
-			return nil
-		}
 	}
 
 	if opts.DryRun {
@@ -374,10 +365,9 @@ func processItem(
 		expectedChecksum, err := downloader.DownloadChecksum(ctx, checksumURL)
 		if err != nil {
 			if errors.Is(err, binance.ErrChecksumNotFound) {
-				log.Printf("Warning: checksum missing for %s %s, continuing", symbol, date)
-			} else {
-				return fmt.Errorf("checksum download failed: %w", err)
+				return fmt.Errorf("required checksum missing for %s %s", symbol, date)
 			}
+			return fmt.Errorf("checksum download failed: %w", err)
 		} else {
 			err = binance.VerifySHA256(paths.ZipPath, expectedChecksum)
 			if err != nil {
@@ -409,7 +399,7 @@ func processItem(
 	}
 
 	// Validate
-	stats, err := validate.ValidateParquet(ctx, paths.ParquetPath)
+	stats, err := validate.ValidateParquetFor(ctx, paths.ParquetPath, validate.CandleExpectations{Market: opts.Market, Symbol: symbol, Interval: opts.Interval})
 	if err != nil {
 		return err
 	}

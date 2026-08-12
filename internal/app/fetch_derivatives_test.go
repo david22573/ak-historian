@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/david22573/ak-historian/internal/datasets"
 	"github.com/david22573/ak-historian/internal/datasets/derivatives"
 )
 
@@ -25,14 +26,15 @@ func (f fakeDerivativesFetcher) Fetch(ctx context.Context, req derivatives.Fetch
 
 func TestFetchDerivativesReportsLimitedHistory(t *testing.T) {
 	result, err := runFetchDerivatives(context.Background(), FetchDerivativesOptions{
-		Source:  "binance",
-		Dataset: derivatives.DatasetOpenInterest,
-		Market:  "futures-um",
-		Symbols: []string{"LINKUSDT"},
-		Start:   "2023-01-01",
-		End:     "2023-12-31",
-		Out:     t.TempDir(),
-		Format:  "json",
+		Source:        "binance",
+		Dataset:       derivatives.DatasetOpenInterest,
+		Market:        "futures-um",
+		Symbols:       []string{"LINKUSDT"},
+		Start:         "2023-01-01",
+		End:           "2023-12-31",
+		Out:           t.TempDir(),
+		Format:        "json",
+		WriteManifest: true,
 		Client: fakeDerivativesFetcher{
 			err: derivatives.LimitedHistoryError{
 				Dataset: derivatives.DatasetOpenInterest,
@@ -55,27 +57,30 @@ func TestFetchDerivativesWritesJSONWithoutZeroFilledMissingRows(t *testing.T) {
 	event := time.Date(2023, 1, 1, 8, 0, 0, 0, time.UTC).UnixMilli()
 	dir := t.TempDir()
 	result, err := runFetchDerivatives(context.Background(), FetchDerivativesOptions{
-		Source:  "binance",
-		Dataset: derivatives.DatasetFundingRate,
-		Market:  "futures-um",
-		Symbols: []string{"LINKUSDT"},
-		Start:   "2023-01-01",
-		End:     "2023-01-31",
-		Out:     dir,
-		Format:  "json",
+		Source:        "binance",
+		Dataset:       derivatives.DatasetFundingRate,
+		Market:        "futures-um",
+		Symbols:       []string{"LINKUSDT"},
+		Start:         "2023-01-01",
+		End:           "2023-01-31",
+		Out:           dir,
+		Format:        "json",
+		WriteManifest: true,
 		Client: fakeDerivativesFetcher{
 			rows: []derivatives.Row{
 				{
-					Source:        "binance",
-					Dataset:       derivatives.DatasetFundingRate,
-					Market:        "futures-um",
-					Symbol:        "LINKUSDT",
-					Interval:      "8h",
-					EventTimeMS:   event,
-					AvailableAtMS: event,
-					IngestedAtMS:  event,
-					Value:         0.0001,
-					SourceVersion: derivatives.SourceVersionBinanceFundingRate,
+					Source:                    "binance",
+					Dataset:                   derivatives.DatasetFundingRate,
+					Market:                    "futures-um",
+					Symbol:                    "LINKUSDT",
+					Interval:                  "8h",
+					EventTimeMS:               event,
+					AvailableAtMS:             event,
+					IngestedAtMS:              event,
+					Value:                     0.0001,
+					SourceVersion:             derivatives.SourceVersionBinanceFundingRate,
+					AvailabilityPolicyID:      derivatives.AvailabilityPolicyObservedIngestionID,
+					AvailabilityPolicyVersion: derivatives.AvailabilityPolicyObservedIngestionVersion,
 				},
 			},
 		},
@@ -100,5 +105,35 @@ func TestFetchDerivativesWritesJSONWithoutZeroFilledMissingRows(t *testing.T) {
 	}
 	if rows[0].EventTimeMS == 0 || rows[0].AvailableAtMS == 0 {
 		t.Fatalf("row looks zero-filled: %+v", rows[0])
+	}
+	if len(result.Manifests) != 1 {
+		t.Fatalf("manifest missing: %+v", result)
+	}
+	manifestBytes, err := os.ReadFile(result.Manifests[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	var manifest datasets.Manifest
+	if err := json.Unmarshal(manifestBytes, &manifest); err != nil {
+		t.Fatal(err)
+	}
+	if manifest.AvailabilityPolicyID != derivatives.AvailabilityPolicyObservedIngestionID || manifest.AvailabilityPolicyVersion != derivatives.AvailabilityPolicyObservedIngestionVersion || len(manifest.Objects) != 1 || manifest.Objects[0].ContentHash == "" {
+		t.Fatalf("manifest does not bind policy/object content: %+v", manifest)
+	}
+}
+
+func TestFetchDerivativesRejectsSourceDisorderBeforeWriting(t *testing.T) {
+	first := time.Date(2026, 8, 1, 8, 0, 0, 0, time.UTC).UnixMilli()
+	row := func(event int64) derivatives.Row {
+		return derivatives.Row{Source: "binance", Dataset: derivatives.DatasetFundingRate, Market: "futures-um", Symbol: "LINKUSDT", Interval: "8h", EventTimeMS: event, AvailableAtMS: event + 1000, IngestedAtMS: event + 1000, Value: 0.001, SourceVersion: derivatives.SourceVersionBinanceFundingRate, AvailabilityPolicyID: derivatives.AvailabilityPolicyObservedIngestionID, AvailabilityPolicyVersion: derivatives.AvailabilityPolicyObservedIngestionVersion}
+	}
+	result, err := runFetchDerivatives(context.Background(), FetchDerivativesOptions{
+		Source: "binance", Dataset: derivatives.DatasetFundingRate, Market: "futures-um", Symbols: []string{"LINKUSDT"}, Interval: "8h",
+		Start: "2026-08-01", End: "2026-08-02", Out: t.TempDir(), Format: "json",
+		WriteManifest: true,
+		Client:        fakeDerivativesFetcher{rows: []derivatives.Row{row(first + 8*60*60*1000), row(first)}},
+	})
+	if err == nil || result.Status != "FAIL" {
+		t.Fatalf("source disorder was normalized: result=%+v err=%v", result, err)
 	}
 }

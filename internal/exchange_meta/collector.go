@@ -4,12 +4,13 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/david22573/ak-historian/internal/atomicfile"
 )
 
 type CollectOptions struct {
@@ -26,6 +27,9 @@ type CollectOptions struct {
 	AllowNetwork     bool
 	RawJSONPath      string
 	BaseURL          string
+	writeSnapshot    func(string, *Snapshot) error
+	writeManifest    func(string, *SnapshotManifest) error
+	writeBytes       func(string, []byte, os.FileMode) error
 }
 
 type CollectReport struct {
@@ -51,6 +55,18 @@ func CollectArchive(ctx context.Context, opts CollectOptions) (*CollectReport, e
 		MarketType:   normalizeDefault(strings.ToLower(opts.MarketType), "futures_um"),
 		FilesWritten: []string{},
 		Warnings:     []string{},
+	}
+	writeSnapshot := opts.writeSnapshot
+	if writeSnapshot == nil {
+		writeSnapshot = WriteSnapshot
+	}
+	writeManifest := opts.writeManifest
+	if writeManifest == nil {
+		writeManifest = WriteSnapshotManifest
+	}
+	writeBytes := opts.writeBytes
+	if writeBytes == nil {
+		writeBytes = atomicfile.WriteFile
 	}
 
 	var raw []byte
@@ -131,11 +147,13 @@ func CollectArchive(ctx context.Context, opts CollectOptions) (*CollectReport, e
 	// Actually, an easier dedupe check without full scan is: if there is an existing manifest, check its Snapshots.
 	manifestPath := filepath.Join(manifestsDir, "exchange_metadata_snapshot_manifest.json")
 	var existingManifest *SnapshotManifest
-	if data, err := os.ReadFile(manifestPath); err == nil {
-		var m SnapshotManifest
-		if json.Unmarshal(data, &m) == nil {
-			existingManifest = &m
+	if _, err := os.Stat(manifestPath); err == nil {
+		existingManifest, err = ReadSnapshotManifest(manifestPath)
+		if err != nil {
+			return nil, fmt.Errorf("read existing manifest: %w", err)
 		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("stat existing manifest: %w", err)
 	}
 
 	if existingManifest != nil {
@@ -155,27 +173,18 @@ func CollectArchive(ctx context.Context, opts CollectOptions) (*CollectReport, e
 
 	if !report.DuplicateSnapshotDetected {
 		if !opts.DryRun {
-			if err := WriteSnapshot(snapshotPath, snapshot); err != nil {
+			if err := writeSnapshot(snapshotPath, snapshot); err != nil {
 				return nil, fmt.Errorf("write snapshot: %w", err)
 			}
 			report.FilesWritten = append(report.FilesWritten, snapshotPath)
 
 			if opts.WriteRaw && rawPath != "" {
-				if err := os.MkdirAll(filepath.Dir(rawPath), 0755); err != nil {
-					return nil, err
-				}
-				if err := os.WriteFile(rawPath, raw, 0644); err != nil {
+				if err := writeBytes(rawPath, raw, 0644); err != nil {
 					return nil, fmt.Errorf("write raw payload: %w", err)
 				}
 				report.FilesWritten = append(report.FilesWritten, rawPath)
 			}
 
-			// update latest copy
-			if err := os.MkdirAll(latestDir, 0755); err == nil {
-				latestSnapPath := filepath.Join(latestDir, "latest_snapshot.json")
-				os.WriteFile(latestSnapPath, raw, 0644) // Actually write snapshot here
-				WriteSnapshot(latestSnapPath, snapshot)
-			}
 		} else {
 			report.FilesWritten = append(report.FilesWritten, "(dry-run) "+snapshotPath)
 			if opts.WriteRaw && rawPath != "" {
@@ -198,17 +207,26 @@ func CollectArchive(ctx context.Context, opts CollectOptions) (*CollectReport, e
 		if err != nil {
 			return nil, fmt.Errorf("build manifest: %w", err)
 		}
-		if err := WriteSnapshotManifest(manifestPath, m); err != nil {
+		if err := writeManifest(manifestPath, m); err != nil {
 			return nil, fmt.Errorf("write manifest: %w", err)
 		}
 		report.FilesWritten = append(report.FilesWritten, manifestPath)
-		report.ManifestRefreshed = true
 
-		// update latest manifest copy
-		if err := os.MkdirAll(latestDir, 0755); err == nil {
-			latestManPath := filepath.Join(latestDir, "latest_manifest.json")
-			WriteSnapshotManifest(latestManPath, m)
+		if !report.DuplicateSnapshotDetected {
+			latestSnapPath := filepath.Join(latestDir, "latest_snapshot.json")
+			if err := writeSnapshot(latestSnapPath, snapshot); err != nil {
+				return nil, fmt.Errorf("publish latest snapshot: %w", err)
+			}
+			report.FilesWritten = append(report.FilesWritten, latestSnapPath)
 		}
+		// latest_manifest.json is the authoritative latest pointer and is
+		// published last, only after every referenced artifact is durable.
+		latestManPath := filepath.Join(latestDir, "latest_manifest.json")
+		if err := writeManifest(latestManPath, m); err != nil {
+			return nil, fmt.Errorf("publish latest manifest: %w", err)
+		}
+		report.FilesWritten = append(report.FilesWritten, latestManPath)
+		report.ManifestRefreshed = true
 	} else if opts.RefreshManifest && opts.DryRun {
 		report.ManifestRefreshed = true
 		report.FilesWritten = append(report.FilesWritten, "(dry-run) "+manifestPath)

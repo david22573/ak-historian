@@ -16,6 +16,9 @@ type DerivativesRow struct {
 	Extra2 float64 `json:"extra_2,omitempty"`
 
 	SourceVersion string `json:"source_version"`
+
+	AvailabilityPolicyID      string `json:"availability_policy_id"`
+	AvailabilityPolicyVersion string `json:"availability_policy_version"`
 }
 
 type Row = DerivativesRow

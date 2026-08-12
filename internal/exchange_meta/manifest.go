@@ -44,10 +44,16 @@ func BuildSnapshotManifest(opts ManifestOptions) (*SnapshotManifest, error) {
 		}
 		snapshot, err := ReadSnapshot(path)
 		if err != nil {
-			return nil
+			return fmt.Errorf("expected snapshot source %s is unreadable or invalid: %w", path, err)
 		}
 		if snapshot.SchemaVersion == "" || snapshot.SnapshotVersion == "" || len(snapshot.Symbols) == 0 {
-			return nil
+			return fmt.Errorf("expected snapshot source %s is incomplete", path)
+		}
+		if manifest.Exchange != StatusUnknown && snapshot.Exchange != manifest.Exchange {
+			return fmt.Errorf("snapshot %s exchange %s does not match expected %s", path, snapshot.Exchange, manifest.Exchange)
+		}
+		if manifest.MarketType != StatusUnknown && snapshot.MarketType != manifest.MarketType {
+			return fmt.Errorf("snapshot %s market type %s does not match expected %s", path, snapshot.MarketType, manifest.MarketType)
 		}
 		relBase := opts.BaseDir
 		if relBase == "" {
@@ -75,9 +81,13 @@ func BuildSnapshotManifest(opts ManifestOptions) (*SnapshotManifest, error) {
 		snapshot := item.snapshot
 		if manifest.Exchange == StatusUnknown {
 			manifest.Exchange = snapshot.Exchange
+		} else if snapshot.Exchange != manifest.Exchange {
+			return nil, fmt.Errorf("snapshot %s exchange %s does not match manifest %s", item.relativePath, snapshot.Exchange, manifest.Exchange)
 		}
 		if manifest.MarketType == StatusUnknown {
 			manifest.MarketType = snapshot.MarketType
+		} else if snapshot.MarketType != manifest.MarketType {
+			return nil, fmt.Errorf("snapshot %s market type %s does not match manifest %s", item.relativePath, snapshot.MarketType, manifest.MarketType)
 		}
 		if manifest.EffectiveStartUTC == "" || snapshot.CollectedAtUTC < manifest.EffectiveStartUTC {
 			manifest.EffectiveStartUTC = snapshot.CollectedAtUTC

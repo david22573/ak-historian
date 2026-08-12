@@ -2,6 +2,7 @@ package lifecycle
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -25,20 +26,65 @@ func (b *Builder) loadExchangeSnapshots(m *Manifest) error {
 		}
 		var snapshots []*exchange_meta.Snapshot
 		baseDir := filepath.Dir(b.ExchangeSnapshotManifestPath)
+		archiveRoot := baseDir
+		if name := filepath.Base(baseDir); name == "manifests" || name == "latest" {
+			archiveRoot = filepath.Dir(baseDir)
+		}
+		seenRefs := make(map[string]struct{}, len(manifest.Snapshots))
 		for _, ref := range manifest.Snapshots {
-			path := ref.RelativePath
-			if !filepath.IsAbs(path) {
-				path = filepath.Join(baseDir, filepath.FromSlash(path))
+			path, err := resolveContainedSnapshotPath(archiveRoot, baseDir, ref.RelativePath)
+			if err != nil {
+				return fmt.Errorf("resolve exchange metadata snapshot %s: %w", ref.RelativePath, err)
 			}
+			if _, duplicate := seenRefs[path]; duplicate {
+				return fmt.Errorf("duplicate exchange metadata snapshot reference %s", ref.RelativePath)
+			}
+			seenRefs[path] = struct{}{}
 			snapshot, err := exchange_meta.ReadSnapshot(path)
 			if err != nil {
 				return fmt.Errorf("read exchange metadata snapshot %s: %w", ref.RelativePath, err)
+			}
+			if snapshot.SnapshotID != ref.SnapshotID || snapshot.CollectedAtUTC != ref.CollectedAtUTC || snapshot.SourceName != ref.SourceName || snapshot.Hashes.SnapshotHash != ref.SnapshotHash || snapshot.TrustLevel != ref.TrustLevel || len(snapshot.Symbols) != ref.SymbolCount {
+				return fmt.Errorf("exchange metadata snapshot reference identity mismatch %s", ref.RelativePath)
+			}
+			if snapshot.Exchange != manifest.Exchange || snapshot.MarketType != manifest.MarketType {
+				return fmt.Errorf("exchange metadata snapshot scope mismatch %s", ref.RelativePath)
 			}
 			snapshots = append(snapshots, snapshot)
 		}
 		applyExchangeSnapshotSet(m, snapshots, manifest, b.ExchangeSnapshotManifestPath)
 	}
 	return nil
+}
+
+func resolveContainedSnapshotPath(archiveRoot, manifestDir, relative string) (string, error) {
+	if relative == "" || filepath.IsAbs(relative) {
+		return "", fmt.Errorf("snapshot reference must be relative")
+	}
+	rootAbs, err := filepath.Abs(archiveRoot)
+	if err != nil {
+		return "", err
+	}
+	candidate, err := filepath.Abs(filepath.Join(manifestDir, filepath.FromSlash(relative)))
+	if err != nil {
+		return "", err
+	}
+	resolved, err := filepath.EvalSymlinks(candidate)
+	if err != nil {
+		return "", err
+	}
+	if resolved != candidate {
+		return "", fmt.Errorf("symlinks are forbidden")
+	}
+	rel, err := filepath.Rel(rootAbs, resolved)
+	if err != nil || filepath.IsAbs(rel) || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("snapshot reference escapes archive root")
+	}
+	info, err := os.Lstat(resolved)
+	if err != nil || !info.Mode().IsRegular() {
+		return "", fmt.Errorf("snapshot reference is not a regular file: %w", err)
+	}
+	return resolved, nil
 }
 
 func applyExchangeSnapshotSet(m *Manifest, snapshots []*exchange_meta.Snapshot, archive *exchange_meta.SnapshotManifest, sourcePath string) {
@@ -175,7 +221,7 @@ func applyExchangeSnapshotSet(m *Manifest, snapshots []*exchange_meta.Snapshot, 
 				SourceHash:      snapshot.Hashes.SnapshotHash,
 				ObservedAtUTC:   normalizeTimestampOrUnknown(observedForSym),
 				EvidenceFields:  fields,
-				Confidence:      "MEDIUM",
+				Confidence:      snapshot.TrustLevel,
 				Notes:           "Exchange metadata snapshot proves observation in this snapshot only; absence alone is not delisting proof.",
 			})
 			if isUnverified {

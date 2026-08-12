@@ -8,20 +8,22 @@ import (
 )
 
 type Manifest struct {
-	SchemaVersion    int      `json:"schema_version"`
-	Kind             string   `json:"kind"`
-	Source           string   `json:"source"`
-	Dataset          string   `json:"dataset"`
-	Market           string   `json:"market,omitempty"`
-	Symbol           string   `json:"symbol,omitempty"`
-	Scope            string   `json:"scope,omitempty"`
-	Interval         string   `json:"interval"`
-	CoverageStartMS  int64    `json:"coverage_start_ms"`
-	CoverageEndMS    int64    `json:"coverage_end_ms"`
-	ObjectCount      int      `json:"object_count"`
-	Objects          []Object `json:"objects"`
-	LastVerifiedAtMS int64    `json:"last_verified_at_ms"`
-	Status           string   `json:"status"`
+	SchemaVersion             int      `json:"schema_version"`
+	Kind                      string   `json:"kind"`
+	Source                    string   `json:"source"`
+	Dataset                   string   `json:"dataset"`
+	Market                    string   `json:"market,omitempty"`
+	Symbol                    string   `json:"symbol,omitempty"`
+	Scope                     string   `json:"scope,omitempty"`
+	Interval                  string   `json:"interval"`
+	CoverageStartMS           int64    `json:"coverage_start_ms"`
+	CoverageEndMS             int64    `json:"coverage_end_ms"`
+	ObjectCount               int      `json:"object_count"`
+	Objects                   []Object `json:"objects"`
+	LastVerifiedAtMS          int64    `json:"last_verified_at_ms"`
+	Status                    string   `json:"status"`
+	AvailabilityPolicyID      string   `json:"availability_policy_id,omitempty"`
+	AvailabilityPolicyVersion string   `json:"availability_policy_version,omitempty"`
 }
 
 type Object struct {
@@ -32,6 +34,7 @@ type Object struct {
 	MaxEventTimeMS   int64  `json:"max_event_time_ms"`
 	MinAvailableAtMS int64  `json:"min_available_at_ms"`
 	MaxAvailableAtMS int64  `json:"max_available_at_ms"`
+	ContentHash      string `json:"content_hash,omitempty"`
 }
 
 func WriteManifest(path string, m Manifest) error {
@@ -53,6 +56,9 @@ func WriteManifest(path string, m Manifest) error {
 			m.Status = "FAIL"
 		}
 		if seenKeys[obj.Key] {
+			m.Status = "FAIL"
+		}
+		if m.SchemaVersion >= 2 && obj.ContentHash == "" {
 			m.Status = "FAIL"
 		}
 		seenKeys[obj.Key] = true

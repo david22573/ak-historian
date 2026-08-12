@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -41,7 +43,7 @@ func init() {
 	fetchDerivativesCmd.Flags().StringVar(&fdEnd, "end", "", "required YYYY-MM-DD")
 	fetchDerivativesCmd.Flags().StringVar(&fdOut, "out", ".ak-historian/work", "output dir")
 	fetchDerivativesCmd.Flags().StringVar(&fdFormat, "format", "parquet", "json | csv | parquet")
-	fetchDerivativesCmd.Flags().BoolVar(&fdWriteManifest, "write-manifest", false, "write manifest")
+	fetchDerivativesCmd.Flags().BoolVar(&fdWriteManifest, "write-manifest", true, "write required content-hashed manifest")
 
 	fetchDerivativesCmd.MarkFlagRequired("source")
 	fetchDerivativesCmd.MarkFlagRequired("dataset")
@@ -134,6 +136,9 @@ func runFetchDerivatives(ctx context.Context, opts FetchDerivativesOptions) (*Fe
 	if opts.Out == "" {
 		return failDerivativesResult(opts, "", fmt.Errorf("out cannot be empty"))
 	}
+	if !opts.WriteManifest {
+		return failDerivativesResult(opts, "", fmt.Errorf("content-hashed derivatives manifest is required"))
+	}
 	if opts.Client == nil {
 		opts.Client = derivatives.NewBinanceClient()
 	}
@@ -182,8 +187,8 @@ func runFetchDerivatives(ctx context.Context, opts FetchDerivativesOptions) (*Fe
 		if err != nil {
 			return failDerivativesResult(opts, symbol, fmt.Errorf("fetch failed: %w", err))
 		}
-		sort.Slice(rows, func(i, j int) bool { return rows[i].EventTimeMS < rows[j].EventTimeMS })
-		if err := datasets.ValidateDerivativesRows(rows); err != nil {
+		expected := derivatives.FetchRequest{Source: opts.Source, Dataset: opts.Dataset, Market: opts.Market, Symbol: symbol, Interval: opts.Interval}
+		if err := datasets.ValidateDerivativesRowsFor(rows, expected); err != nil {
 			return failDerivativesResult(opts, symbol, fmt.Errorf("validation failed: %w", err))
 		}
 		symbolResult, err := writeDerivativesSymbol(ctx, opts, symbol, rows)
@@ -281,6 +286,10 @@ func writeDerivativesSymbol(ctx context.Context, opts FetchDerivativesOptions, s
 		default:
 			return FetchDerivativesSymbol{}, fmt.Errorf("unsupported format: %s", opts.Format)
 		}
+		contentHash, err := hashDatasetObject(outPath)
+		if err != nil {
+			return FetchDerivativesSymbol{}, fmt.Errorf("hash dataset object: %w", err)
+		}
 		manifestObjs = append(manifestObjs, datasets.Object{
 			Key:              key,
 			Period:           spec.Date,
@@ -289,6 +298,7 @@ func writeDerivativesSymbol(ctx context.Context, opts FetchDerivativesOptions, s
 			MaxEventTimeMS:   stats.MaxEventTimeMS,
 			MinAvailableAtMS: stats.MinAvailableAtMS,
 			MaxAvailableAtMS: stats.MaxAvailableAtMS,
+			ContentHash:      contentHash,
 		})
 	}
 
@@ -317,18 +327,20 @@ func writeDerivativesSymbol(ctx context.Context, opts FetchDerivativesOptions, s
 			}
 		}
 		m := datasets.Manifest{
-			SchemaVersion:    1,
-			Kind:             string(datasets.KindDerivatives),
-			Source:           opts.Source,
-			Dataset:          opts.Dataset,
-			Market:           opts.Market,
-			Symbol:           symbol,
-			Interval:         opts.Interval,
-			CoverageStartMS:  minEvent,
-			CoverageEndMS:    maxEvent,
-			ObjectCount:      len(manifestObjs),
-			Objects:          manifestObjs,
-			LastVerifiedAtMS: time.Now().UTC().UnixMilli(),
+			SchemaVersion:             2,
+			Kind:                      string(datasets.KindDerivatives),
+			Source:                    opts.Source,
+			Dataset:                   opts.Dataset,
+			Market:                    opts.Market,
+			Symbol:                    symbol,
+			Interval:                  opts.Interval,
+			CoverageStartMS:           minEvent,
+			CoverageEndMS:             maxEvent,
+			ObjectCount:               len(manifestObjs),
+			Objects:                   manifestObjs,
+			LastVerifiedAtMS:          time.Now().UTC().UnixMilli(),
+			AvailabilityPolicyID:      derivatives.AvailabilityPolicyObservedIngestionID,
+			AvailabilityPolicyVersion: derivatives.AvailabilityPolicyObservedIngestionVersion,
 		}
 		if err := datasets.WriteManifest(manifestPath, m); err != nil {
 			return FetchDerivativesSymbol{}, fmt.Errorf("write manifest failed: %w", err)
@@ -336,6 +348,19 @@ func writeDerivativesSymbol(ctx context.Context, opts FetchDerivativesOptions, s
 		symbolResult.Manifest = manifestPath
 	}
 	return symbolResult, nil
+}
+
+func hashDatasetObject(path string) (string, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("sha256:%x", h.Sum(nil)), nil
 }
 
 func parseDerivativesSymbols(csv string) []string {
