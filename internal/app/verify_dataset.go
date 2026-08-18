@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/david22573/ak-historian/internal/datasets"
 	"github.com/david22573/ak-historian/internal/datasets/derivatives"
+	"github.com/david22573/ak-historian/internal/duckdbquery"
 	"github.com/spf13/cobra"
 )
 
@@ -170,8 +170,7 @@ type verifyStats struct {
 }
 
 func executeDuckDB(ctx context.Context, query string) verifyStats {
-	cmd := exec.CommandContext(ctx, "duckdb", "-csv", "-noheader", "-c", query)
-	out, err := cmd.CombinedOutput()
+	out, err := duckdbquery.RunQuery(ctx, query, "-csv", "-noheader")
 	if err != nil {
 		return verifyStats{Err: fmt.Errorf("%s: %w", string(out), err)}
 	}

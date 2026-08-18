@@ -1,6 +1,8 @@
 package parquetutil
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"fmt"
 	"math"
@@ -45,41 +47,87 @@ func ReadOpenTimesStrict(paths []string) ([]int64, error) {
 	return openTimes, nil
 }
 
+// StreamOpenTimes streams open times across partition files sequentially to avoid large memory allocations.
+func StreamOpenTimes(paths []string, fn func(openTimeMS int64) error) error {
+	for _, path := range paths {
+		if _, err := exec.LookPath("duckdb"); err == nil {
+			query := fmt.Sprintf(
+				"COPY (SELECT open_time_ms FROM read_parquet(%s) ORDER BY open_time_ms) TO STDOUT (FORMAT CSV, HEADER FALSE);",
+				duckdbquery.QuoteString(path),
+			)
+			output, err := duckdbquery.RunQuery(context.Background(), query)
+			if err != nil {
+				return fmt.Errorf("duckdb stream open times failed for %s: %w", path, err)
+			}
+			scanner := bufio.NewScanner(bytes.NewReader(output))
+			for scanner.Scan() {
+				line := strings.TrimSpace(scanner.Text())
+				if line == "" {
+					continue
+				}
+				v, err := strconv.ParseInt(line, 10, 64)
+				if err != nil {
+					return fmt.Errorf("parse duckdb open_time_ms %q: %w", line, err)
+				}
+				if err := fn(v); err != nil {
+					return err
+				}
+			}
+			if err := scanner.Err(); err != nil {
+				return fmt.Errorf("scan duckdb stream for %s: %w", path, err)
+			}
+		} else {
+			rows, err := readRows(path)
+			if err != nil {
+				return err
+			}
+			for _, r := range rows {
+				if err := fn(r.OpenTimeMS); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func readOpenTimesDuckDB(paths []string) ([]int64, error) {
 	if len(paths) == 0 {
 		return nil, nil
 	}
 
-	quoted := make([]string, 0, len(paths))
+	openTimes := make([]int64, 0)
+	// Stream partitions sequentially rather than reading multi-year dataframes all at once into memory
 	for _, path := range paths {
-		quoted = append(quoted, duckdbquery.QuoteString(path))
-	}
+		query := fmt.Sprintf(
+			"COPY (SELECT open_time_ms FROM read_parquet(%s) ORDER BY open_time_ms) TO STDOUT (FORMAT CSV, HEADER FALSE);",
+			duckdbquery.QuoteString(path),
+		)
 
-	query := fmt.Sprintf(
-		"COPY (SELECT open_time_ms FROM read_parquet([%s]) ORDER BY open_time_ms) TO STDOUT (FORMAT CSV, HEADER FALSE);",
-		strings.Join(quoted, ", "),
-	)
-
-	output, err := duckdbquery.RunQuery(context.Background(), query)
-	if err != nil {
-		return nil, fmt.Errorf("duckdb read open times failed: %w", err)
-	}
-
-	lines := strings.Split(strings.TrimSpace(string(output)), "\n")
-	openTimes := make([]int64, 0, len(lines))
-	for _, line := range lines {
-		line = strings.TrimSpace(line)
-		if line == "" {
-			continue
-		}
-		v, err := strconv.ParseInt(line, 10, 64)
+		output, err := duckdbquery.RunQuery(context.Background(), query)
 		if err != nil {
-			return nil, fmt.Errorf("parse duckdb open_time_ms %q: %w", line, err)
+			return nil, fmt.Errorf("duckdb read open times failed for %s: %w", path, err)
 		}
-		openTimes = append(openTimes, v)
+
+		scanner := bufio.NewScanner(bytes.NewReader(output))
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" {
+				continue
+			}
+			v, err := strconv.ParseInt(line, 10, 64)
+			if err != nil {
+				return nil, fmt.Errorf("parse duckdb open_time_ms %q: %w", line, err)
+			}
+			openTimes = append(openTimes, v)
+		}
+		if err := scanner.Err(); err != nil {
+			return nil, fmt.Errorf("scan duckdb open times for %s: %w", path, err)
+		}
 	}
 	return openTimes, nil
 }
+
 
 func ReadStats(path string) (Stats, error) {
 	rows, err := readRows(path)

@@ -1,16 +1,17 @@
 package datasets
 
 import (
+	"context"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 
 	"github.com/david22573/ak-historian/internal/datasets/derivatives"
 	"github.com/david22573/ak-historian/internal/datasets/sentiment"
+	"github.com/david22573/ak-historian/internal/duckdbquery"
 )
 
 func WriteSentimentRowsJSON(path string, rows []sentiment.Row) error {
@@ -70,11 +71,6 @@ func WriteSentimentRowsCSV(path string, rows []sentiment.Row) error {
 }
 
 func WriteSentimentRowsParquet(csvPath, parquetPath string) error {
-	_, err := exec.LookPath("duckdb")
-	if err != nil {
-		return fmt.Errorf("parquet output requires duckdb installed")
-	}
-
 	escapedCsv := strings.ReplaceAll(csvPath, "'", "''")
 	escapedParquet := strings.ReplaceAll(parquetPath, "'", "''")
 
@@ -83,10 +79,9 @@ func WriteSentimentRowsParquet(csvPath, parquetPath string) error {
 		escapedCsv, escapedParquet,
 	)
 
-	cmd := exec.Command("duckdb", "-c", query)
-	output, err := cmd.CombinedOutput()
+	_, err := duckdbquery.RunQuery(context.Background(), query)
 	if err != nil {
-		return fmt.Errorf("duckdb parquet conversion failed: %s: %w", string(output), err)
+		return fmt.Errorf("duckdb parquet conversion failed: %w", err)
 	}
 
 	return nil
@@ -145,11 +140,6 @@ func WriteDerivativesRowsCSV(path string, rows []derivatives.Row) error {
 }
 
 func WriteDerivativesRowsParquet(csvPath, parquetPath string) error {
-	_, err := exec.LookPath("duckdb")
-	if err != nil {
-		return fmt.Errorf("parquet output requires duckdb installed")
-	}
-
 	escapedCsv := strings.ReplaceAll(csvPath, "'", "''")
 	escapedParquet := strings.ReplaceAll(parquetPath, "'", "''")
 
@@ -158,10 +148,9 @@ func WriteDerivativesRowsParquet(csvPath, parquetPath string) error {
 		escapedCsv, escapedParquet,
 	)
 
-	cmd := exec.Command("duckdb", "-c", query)
-	output, err := cmd.CombinedOutput()
+	_, err := duckdbquery.RunQuery(context.Background(), query)
 	if err != nil {
-		return fmt.Errorf("duckdb parquet conversion failed: %s: %w", string(output), err)
+		return fmt.Errorf("duckdb parquet conversion failed: %w", err)
 	}
 
 	return nil

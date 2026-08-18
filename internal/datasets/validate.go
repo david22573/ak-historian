@@ -9,6 +9,7 @@ import (
 
 	"github.com/david22573/ak-historian/internal/datasets/derivatives"
 	"github.com/david22573/ak-historian/internal/datasets/sentiment"
+	"github.com/david22573/ak-historian/internal/duckdbquery"
 )
 
 func ValidateSentimentRows(rows []sentiment.Row) error {
@@ -142,8 +143,7 @@ func ValidateDatasetParquet(ctx context.Context, path string) (RowStats, error) 
 
 	query := fmt.Sprintf(`SELECT source, dataset, market, symbol, interval, event_time_ms, available_at_ms, ingested_at_ms, value, extra_1, extra_2, source_version, availability_policy_id, availability_policy_version FROM read_parquet('%s');`, escapedPath)
 
-	cmd := exec.CommandContext(ctx, "duckdb", "-json", "-c", query)
-	output, err := cmd.CombinedOutput()
+	output, err := duckdbquery.RunQuery(ctx, query, "-json")
 	if err != nil {
 		return RowStats{}, fmt.Errorf("duckdb parquet validation failed: %s: %w", string(output), err)
 	}
